@@ -1,0 +1,9 @@
+package com.fcv.citas.application.port.in;
+
+import com.fcv.citas.application.model.TokenPair;
+
+public interface AuthenticationUseCase {
+    TokenPair login(String email, String password);
+    TokenPair refresh(String refreshToken);
+    void logout(String refreshToken);
+}

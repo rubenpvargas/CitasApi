@@ -1,0 +1,40 @@
+package com.fcv.citas.config;
+
+import com.fcv.citas.application.port.in.AuthenticationUseCase;
+import com.fcv.citas.application.port.in.RegisterUserUseCase;
+import com.fcv.citas.application.port.out.PasswordHashPort;
+import com.fcv.citas.application.port.out.RefreshSessionRepositoryPort;
+import com.fcv.citas.application.port.out.TokenHashPort;
+import com.fcv.citas.application.port.out.TokenPort;
+import com.fcv.citas.application.port.out.TransactionPort;
+import com.fcv.citas.application.port.out.UserRepositoryPort;
+import com.fcv.citas.application.service.AuthenticationService;
+import com.fcv.citas.application.service.RegisterUserService;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
+
+@Configuration
+public class ApplicationConfig {
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
+    RegisterUserUseCase registerUserUseCase(UserRepositoryPort users, PasswordHashPort passwords,
+                                            TransactionPort transactions) {
+        return new RegisterUserService(users, passwords, transactions);
+    }
+
+    @Bean
+    AuthenticationUseCase authenticationUseCase(UserRepositoryPort users,
+                                                 RefreshSessionRepositoryPort sessions,
+                                                 PasswordHashPort passwords, TokenPort tokens,
+                                                 TokenHashPort tokenHashes, TransactionPort transactions,
+                                                 Clock clock) {
+        return new AuthenticationService(users, sessions, passwords, tokens, tokenHashes,
+                transactions, clock);
+    }
+}
