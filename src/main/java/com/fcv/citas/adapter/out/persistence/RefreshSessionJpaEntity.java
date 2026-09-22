@@ -23,10 +23,10 @@ class RefreshSessionJpaEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserJpaEntity user;
 
-    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64, columnDefinition = "char(64)")
     private String tokenHash;
 
-    @Column(nullable = false, unique = true, length = 36)
+    @Column(nullable = false, unique = true, length = 36, columnDefinition = "char(36)")
     private String jti;
 
     @Column(name = "issued_at", nullable = false)
@@ -38,7 +38,7 @@ class RefreshSessionJpaEntity {
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
-    @Column(name = "replaced_by_jti", length = 36)
+    @Column(name = "replaced_by_jti", length = 36, columnDefinition = "char(36)")
     private String replacedByJti;
 
     protected RefreshSessionJpaEntity() {

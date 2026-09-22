@@ -6,7 +6,7 @@
 | [arquitectura.md](arquitectura.md) | límites API/web, stack y repos | inicial |
 | [modelo-datos.md](modelo-datos.md) | invariantes de normalización y preguntas | inicial |
 | [contratos-rest.md](contratos-rest.md) | contrato REST canónico | autenticación v1 aprobada |
-| [decisiones.md](decisiones.md) | decisiones aprobadas y ADRs | inicial |
+| [decisiones.md](decisiones.md) | decisiones aprobadas y ADRs | auth/persistencia verificada |
 | [riesgos-y-preguntas-abiertas.md](riesgos-y-preguntas-abiertas.md) | contradicciones y decisiones pendientes | inicial |
 | [preferencias.md](preferencias.md) | preferencias de trabajo explícitas | inicial |
 | [log.md](log.md) | registro append-only de operaciones wiki | activo |

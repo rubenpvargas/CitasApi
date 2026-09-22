@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -74,7 +75,7 @@ public class SecurityConfig {
 
     private static void writeProblem(HttpServletResponse response, ObjectMapper mapper, int status,
                                      String code, String detail) throws IOException {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.valueOf(status), detail);
         problem.setType(URI.create("about:blank"));
         problem.setTitle(detail);
         problem.setProperty("code", code);

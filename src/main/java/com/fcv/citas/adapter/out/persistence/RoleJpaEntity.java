@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 class RoleJpaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Short id;
 
     @Column(nullable = false, unique = true, length = 32)
     private String code;
@@ -20,7 +20,7 @@ class RoleJpaEntity {
     protected RoleJpaEntity() {
     }
 
-    Long getId() {
+    Short getId() {
         return id;
     }
 
