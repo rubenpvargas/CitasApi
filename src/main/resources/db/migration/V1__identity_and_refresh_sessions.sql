@@ -1,6 +1,8 @@
 CREATE TABLE roles (
     id BIGINT NOT NULL AUTO_INCREMENT,
     code VARCHAR(32) NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    description VARCHAR(255) NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT uk_roles_code UNIQUE (code)
 );
@@ -46,4 +48,7 @@ CREATE TABLE refresh_sessions (
     INDEX idx_refresh_sessions_user_active (user_id, revoked_at, expires_at)
 );
 
-INSERT INTO roles (code) VALUES ('USER');
+INSERT INTO roles (code, name, description) VALUES
+    ('USER', 'Usuario', 'Usuario final del laboratorio'),
+    ('PROFESSIONAL', 'Profesional', 'Profesional ficticio del laboratorio'),
+    ('ADMIN', 'Administrador', 'Administrador del laboratorio');

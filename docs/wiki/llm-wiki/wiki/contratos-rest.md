@@ -38,3 +38,27 @@ verificación con un usuario sintético mostró su nombre en el dashboard.
 
 Los contratos de funcionalidades posteriores, paginación y política global de
 fechas/zona horaria siguen pendientes de aprobación.
+
+## PLAN CROSS-REPO — catálogos fijos (HU-007)
+
+**Cambio aditivo de contrato.** La API incorporará `GET /api/v1/catalogs` para
+un consumidor autenticado. La respuesta agrupa listas de solo lectura de
+`roles`, `appointmentStatuses`, `rescheduleRequestStatuses`,
+`insuranceRegimes` y `locations`. Cada elemento lleva su identificador técnico
+estable (`code`) y su nombre; los estados incluyen `terminal` y las sedes
+incluyen su ubicación pública del laboratorio. No se incorporarán rutas de
+escritura para estos catálogos.
+
+- **citas-api:** migración Flyway con tablas/semillas e idempotencia, puerto de
+  consulta, adaptador de persistencia, caso de uso, controlador REST y pruebas.
+- **citas-web:** no requiere modificación en esta HU; aún no existe una pantalla
+  que consuma estos catálogos. Un incremento posterior usará este contrato sin
+  introducir BFF.
+- **Evidencia prevista:** prueba de aplicación para el mapeo de catálogos,
+  `mvn test`, migración aplicada y consultas HTTP que prueben `401` sin sesión
+  y `200` con JWT, sin operaciones CRUD de escritura.
+
+**Validado el 2026-09-24.** V3 quedó aplicada en MySQL local. `GET
+`/api/v1/catalogs` devuelve los cinco catálogos con JWT; sin JWT devuelve `401`
+y un `POST` a la misma ruta devuelve `405`. No se cambió `citas-web` porque no
+hay consumidor de catálogos en esta HU.
