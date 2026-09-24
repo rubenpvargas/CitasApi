@@ -2,6 +2,7 @@ package com.fcv.citas.application.service;
 
 import com.fcv.citas.application.exception.InvalidCredentialsException;
 import com.fcv.citas.application.exception.InvalidRefreshTokenException;
+import com.fcv.citas.application.model.AuthenticatedSession;
 import com.fcv.citas.application.model.RefreshTokenClaims;
 import com.fcv.citas.application.model.TokenPair;
 import com.fcv.citas.application.port.in.AuthenticationUseCase;
@@ -39,7 +40,7 @@ public final class AuthenticationService implements AuthenticationUseCase {
     }
 
     @Override
-    public TokenPair login(String rawEmail, String password) {
+    public AuthenticatedSession login(String rawEmail, String password) {
         return transactions.required(() -> {
             User user = users.findByEmail(RegisterUserService.normalizeEmail(rawEmail))
                     .filter(User::active)
@@ -50,7 +51,7 @@ public final class AuthenticationService implements AuthenticationUseCase {
             Instant now = clock.instant();
             TokenPair pair = tokens.issuePair(user, now);
             sessions.save(toSession(user, pair, now));
-            return pair;
+            return new AuthenticatedSession(user, pair);
         });
     }
 

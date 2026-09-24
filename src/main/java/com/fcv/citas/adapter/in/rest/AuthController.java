@@ -31,8 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    TokenResponse login(@Valid @RequestBody LoginRequest request) {
-        return TokenResponse.from(authentication.login(request.email(), request.password()));
+    LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return LoginResponse.from(authentication.login(request.email(), request.password()));
     }
 
     @PostMapping("/refresh")

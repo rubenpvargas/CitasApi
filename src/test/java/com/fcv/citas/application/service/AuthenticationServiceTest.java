@@ -55,8 +55,10 @@ class AuthenticationServiceTest {
 
     @Test
     void loginEmitsSeparateAccessAndRefreshTokensAndPersistsOnlyRefreshHash() {
-        TokenPair pair = service.login("ANA@EXAMPLE.TEST", "correct-password");
+        var session = service.login("ANA@EXAMPLE.TEST", "correct-password");
+        TokenPair pair = session.tokens();
 
+        assertThat(session.user().firstName()).isEqualTo("Ana");
         assertThat(pair.accessToken()).isNotEqualTo(pair.refreshToken());
         RefreshSession saved = sessions.lastSaved();
         assertThat(saved.tokenHash()).isEqualTo(hash("refresh-1"));
@@ -73,7 +75,7 @@ class AuthenticationServiceTest {
 
     @Test
     void refreshRotatesTheRefreshSessionAndRejectsReuseOfTheRevokedToken() {
-        TokenPair original = service.login("ana@example.test", "correct-password");
+        TokenPair original = service.login("ana@example.test", "correct-password").tokens();
 
         TokenPair replacement = service.refresh(original.refreshToken());
 
@@ -89,7 +91,7 @@ class AuthenticationServiceTest {
 
     @Test
     void logoutRevokesTheRefreshSessionAndPreventsFurtherRefresh() {
-        TokenPair pair = service.login("ana@example.test", "correct-password");
+        TokenPair pair = service.login("ana@example.test", "correct-password").tokens();
 
         service.logout(pair.refreshToken());
 
