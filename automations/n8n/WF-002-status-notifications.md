@@ -17,3 +17,5 @@ Eventos mínimos:
 
 ## Entregable
 `WF-002-status-notifications.json`.
+
+Validación controlada: importación en n8n 2.41.3 y webhook `POST /webhook/citas-status` con evento sintético `REJECTED`; respuesta `202` determinista. Gmail permanece sin credencial versionada.

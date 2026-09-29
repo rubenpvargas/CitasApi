@@ -3,3 +3,13 @@
 | Fecha | Operación | Fuentes/páginas | Resultado |
 |---|---|---|---|
 | 2026-09-17 | INGEST + INIT | SRC-PRD-001, SRC-TECH-001, SRC-DB-001, SRC-EVID-001, SRC-NOTES-001, READMEs; índice y páginas iniciales | estructura creada; contrato REST queda pendiente |
+| 2026-09-17 | DECISIÓN | HU-001, HU-002, HU-003; contratos-rest.md; index.md | contrato de autenticación v1 aprobado e inicio de desarrollo backend registrado |
+| 2026-09-22 | DECISIÓN + VALIDACIÓN | decisiones.md; V1/V2 Flyway; arranque local | baseline heredado preservado, V2 de refresh aplicada y API de auth iniciada |
+| 2026-09-24 | PLAN CROSS-REPO | contratos-rest.md | login incorporará identidad visible sin exponer credenciales |
+| 2026-09-24 | VALIDACIÓN CROSS-REPO | contratos-rest.md; Maven; Angular; navegador local | respuesta `user` consumida por UI y nombre autenticado visible |
+| 2026-09-24 | PLAN CROSS-REPO | HU-007; contratos-rest.md | se acuerda consulta autenticada y de solo lectura de catálogos fijos; `citas-web` no tiene consumidor en este incremento |
+| 2026-09-24 | VALIDACIÓN | HU-007; V3 Flyway; Maven; HTTP local | catálogos fijos sembrados y consultables con JWT; sin ruta de escritura |
+| 2026-09-29 | IMPLEMENTACIÓN + VALIDACIÓN | V4–V7; SchedulingController; SchedulingService; Dockerfiles; compose; CIERRE_S2_S6 | dominio de agenda/reserva/reprogramación, healthchecks, SPA de producción y matriz de evidencia añadidos; pruebas ejecutadas con datos sintéticos |
+| 2026-09-30 | TRAZABILIDAD | LOOP_01, LOOP_02, LOOP_03; WF-001/WF-002 JSON | loops versionados y workflows exportables sin credenciales; concurrencia, E2E de tres roles y ejecución n8n quedan explícitamente pendientes |
+| 2026-09-30 | VALIDACIÓN + CORRECCIÓN | V2 Flyway; docker-compose.e2e.yml; verify-e2e.ps1; verify-concurrency.ps1; n8n temporal | V2 quedó idempotente para base limpia; E2E limpio, carrera de reserva, importación de ambos workflows y webhook WF-002 HTTP 202 verificados |
+| 2026-09-30 | VALIDACIÓN CROSS-REPO | verify-edge-flows.ps1; verify-admin-offer.ps1; verify-general-booking.ps1; contrato `/admin/locations` | perfil, afiliación, CRUD de oferta, capacidades, bloques, reserva general, cancelación y sede normalizada verificados con datos sintéticos |

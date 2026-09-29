@@ -13,3 +13,5 @@
 
 ## Entregable
 `WF-001-appointment-reminders.json`.
+
+El export consulta `GET /api/v1/admin/automation/appointments/reminders?hours=24` con JWT de rol `ADMIN`. La credencial HTTP se configura en n8n y no se incluye en el archivo.
