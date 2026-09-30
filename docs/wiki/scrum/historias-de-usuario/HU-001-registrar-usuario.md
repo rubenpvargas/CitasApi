@@ -2,7 +2,7 @@
 id: HU-001
 tipo: historia-de-usuario
 titulo: Registrar usuario
-estado: En desarrollo
+estado: Completada
 epica: "[[EP-001-identidad-y-acceso]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 1

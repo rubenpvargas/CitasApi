@@ -1,14 +1,34 @@
 # citas-api
 
-Repositorio backend del proyecto. **No contiene implementación de negocio inicial**.
+Backend Spring Boot 3.5 / Java 21 del laboratorio sintético de agendamiento.
+La identidad conserva puertos hexagonales, y la vertical de agenda usa
+transacciones JDBC detrás de servicios de aplicación para serializar slots.
 
-## Debe ser construido por el estudiante
-- Java 21 + Spring Boot 3.5.x + Maven.
-- Arquitectura hexagonal.
-- MySQL + Flyway.
-- Spring Security + JWT access/refresh.
-- REST.
-- Pruebas.
+## Ejecución
+
+La validación aislada desde base limpia usa `docker-compose.e2e.yml` y
+`scripts/verify-e2e.ps1`; `scripts/verify-concurrency.ps1` cubre la carrera de
+doble reserva. WF-002 fue importado y probado con evento sintético, respuesta
+HTTP 202 y sin credenciales versionadas.
+
+Con MySQL levantado y variables de `.env.example` configuradas:
+
+```powershell
+mvn spring-boot:run
+```
+
+Flyway crea el esquema 3FN y la oferta demo en una base vacía. La contraseña
+de demo sintética es `Demo1234*`; no usarla fuera del laboratorio.
+
+Health: `GET /actuator/health`.
+
+## Verificación
+
+```powershell
+mvn test
+```
+
+El contrato REST canónico vive en `docs/wiki/llm-wiki/wiki/contratos-rest.md`.
 
 ## Documentación compartida
 - `docs/wiki/scrum/`: épicas/HU generadas con la Skill Scrum.

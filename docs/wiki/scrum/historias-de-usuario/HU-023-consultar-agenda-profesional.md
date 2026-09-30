@@ -2,7 +2,7 @@
 id: HU-023
 tipo: historia-de-usuario
 titulo: Consultar agenda profesional
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-006-operacion-y-trazabilidad]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 5

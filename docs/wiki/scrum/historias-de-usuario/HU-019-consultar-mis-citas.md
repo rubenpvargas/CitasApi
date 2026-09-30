@@ -2,7 +2,7 @@
 id: HU-019
 tipo: historia-de-usuario
 titulo: Consultar mis citas
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-004-ciclo-de-vida-de-citas]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 4

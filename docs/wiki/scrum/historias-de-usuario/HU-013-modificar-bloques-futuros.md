@@ -2,7 +2,7 @@
 id: HU-013
 tipo: historia-de-usuario
 titulo: Modificar bloques futuros
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-003-profesionales-y-disponibilidad]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 3

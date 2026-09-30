@@ -2,7 +2,7 @@
 id: HU-018
 tipo: historia-de-usuario
 titulo: Decidir solicitud especializada
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-004-ciclo-de-vida-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 4

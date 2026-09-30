@@ -2,7 +2,7 @@
 id: HU-011
 tipo: historia-de-usuario
 titulo: Configurar capacidades del profesional
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-003-profesionales-y-disponibilidad]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 2

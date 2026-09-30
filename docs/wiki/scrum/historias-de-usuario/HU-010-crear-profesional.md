@@ -2,7 +2,7 @@
 id: HU-010
 tipo: historia-de-usuario
 titulo: Crear profesional
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-003-profesionales-y-disponibilidad]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 2

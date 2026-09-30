@@ -62,3 +62,29 @@ escritura para estos catálogos.
 `/api/v1/catalogs` devuelve los cinco catálogos con JWT; sin JWT devuelve `401`
 y un `POST` a la misma ruta devuelve `405`. No se cambió `citas-web` porque no
 hay consumidor de catálogos en esta HU.
+
+## CONTRATO — Vertical funcional S2-S6
+
+La aplicación mantiene REST directo Angular → Spring Boot. Los endpoints de
+perfil y citas usan el `sub` del access JWT como ownership; los endpoints
+`/admin/**` exigen `ADMIN` y `/professional/**` exigen `PROFESSIONAL`.
+
+| Capacidad | Endpoint principal | Resultado |
+|---|---|---|
+| Recuperación | `POST /api/v1/auth/password-reset/request`, `POST /api/v1/auth/password-reset/confirm` | Token de un solo uso; en desarrollo puede devolverse en respuesta controlada |
+| Perfil/afiliación | `GET/PATCH /api/v1/me`, `GET/PUT /api/v1/me/affiliations` | Solo el usuario autenticado |
+| Oferta ADMIN | `/api/v1/admin/eps`, `/plans`, `/specialties`, `/professionals` | CRUD lógico; referencias se desactivan |
+| Agenda | `POST/PATCH/DELETE /api/v1/professional/blocks`, `GET /professional/calendar` | Bloques futuros, sin solapes ni sedes no asignadas |
+| Disponibilidad | `GET /api/v1/availability` | Slots libres filtrables; 60 minutos exige slots consecutivos |
+| Citas | `POST /appointments/general`, `POST /appointments/specialized`, `GET /appointments`, `POST /appointments/{id}/cancel` | General `APPROVED`; especializada `REQUESTED`; operación transaccional |
+| Decisiones | `GET /admin/inbox`, `POST /admin/appointments/{id}/decision` | Rechazo exige motivo y libera slots |
+| Reprogramación | `POST /appointments/{id}/reschedule`, `POST /admin/reschedules/{id}/decision` | La franja original permanece hasta decisión; nueva franja queda retenida |
+| Operación | `GET /professional/agenda`, `POST /professional/appointments/{id}/close` | Solo agenda propia y cierre `COMPLETED`/`NO_SHOW` aplicable |
+
+Errores de regla de negocio son `409 application/problem+json` con `code`
+estable (`SLOT_UNAVAILABLE`, `REJECTION_REASON_REQUIRED`, `INVALID_TRANSITION`,
+`PAST_BLOCK`, entre otros). Seguridad conserva `401/403` y no devuelve
+credenciales ni tokens en mensajes de error.
+### S2–S6 — sede normalizada para configuración ADMIN
+
+`GET /api/v1/admin/locations` (`ADMIN`) devuelve `id`, `code`, `name`, dirección, ciudad, departamento y estado. Se usa para enviar `locationIds` en `PUT /api/v1/admin/professionals/{id}/capabilities`; el catálogo público continúa exponiendo solo la representación de lectura.

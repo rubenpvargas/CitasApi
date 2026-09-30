@@ -3,6 +3,8 @@ package com.fcv.citas.adapter.in.rest;
 import com.fcv.citas.application.exception.DuplicateIdentifierException;
 import com.fcv.citas.application.exception.InvalidCredentialsException;
 import com.fcv.citas.application.exception.InvalidRefreshTokenException;
+import com.fcv.citas.application.exception.BusinessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(BusinessException.class)
+    ResponseEntity<ProblemDetail> business(BusinessException exception) {
+        return problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    ResponseEntity<ProblemDetail> integrity() {
+        return problem(HttpStatus.CONFLICT, "INTEGRITY_ERROR", "The operation conflicts with existing data");
+    }
     @ExceptionHandler(DuplicateIdentifierException.class)
     ResponseEntity<ProblemDetail> duplicateIdentifier() {
         return problem(HttpStatus.CONFLICT, "IDENTIFIER_ALREADY_REGISTERED",

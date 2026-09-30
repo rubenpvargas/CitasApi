@@ -10,6 +10,7 @@
 | [riesgos-y-preguntas-abiertas.md](riesgos-y-preguntas-abiertas.md) | contradicciones y decisiones pendientes | inicial |
 | [preferencias.md](preferencias.md) | preferencias de trabajo explícitas | inicial |
 | [log.md](log.md) | registro append-only de operaciones wiki | activo |
+| [CIERRE_S2_S6.md](../../scrum/CIERRE_S2_S6.md) | matriz de evidencia S2–S6 y brechas de cierre | validación técnica |
 
 Fuentes RAW: [source-manifest](../raw/source-manifest.md). Convenciones:
 [conventions](../schema/conventions.md). Workflows:

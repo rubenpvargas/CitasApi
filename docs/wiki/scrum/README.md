@@ -1,13 +1,13 @@
 ---
 tipo: indice-scrum
-estado: Pendiente de aprobación
+estado: Completada
 ---
 
 # Mapa Scrum / Spec-Driven Development — Sistema de Citas
 
 ## Propósito y límites
 
-Mapa trazable del PRD v1.0 para implementar el producto por incrementos verificables. Todas las historias están **Pendiente de aprobación**: ninguna autoriza implementación hasta revisión explícita. Se usan únicamente datos sintéticos. El frontend será React o Angular tras la decisión de Stitch/AI Studio; consumirá REST/JSON directamente desde Spring Boot, sin BFF.
+Mapa trazable del PRD v1.0 para implementar el producto por incrementos verificables. Las historias quedan cerradas técnicamente según la matriz [CIERRE_S2_S6.md](CIERRE_S2_S6.md), con datos exclusivamente sintéticos. El frontend Angular consume REST/JSON directamente desde Spring Boot, sin BFF.
 
 ## Arquitectura y datos que condicionan las HU
 

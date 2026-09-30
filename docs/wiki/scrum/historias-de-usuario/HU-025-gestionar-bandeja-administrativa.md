@@ -2,7 +2,7 @@
 id: HU-025
 tipo: historia-de-usuario
 titulo: Gestionar bandeja administrativa
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-006-operacion-y-trazabilidad]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 5

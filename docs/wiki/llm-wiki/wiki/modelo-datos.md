@@ -23,8 +23,15 @@ transitivas y valores de texto divergentes en tablas transaccionales.
 
 ## PREGUNTA ABIERTA
 
-Aún no existe el modelo propio del estudiante ni contrato de persistencia. La
-solución de referencia del trainer se comparará después y no se usa para
-inferir tablas ahora.
+El modelo implementado en Flyway V4-V6 agrega EPS/planes/afiliaciones,
+especialidades, profesionales y sus dos relaciones N:M, bloques, slots
+atómicos, citas, historial y reprogramaciones. `professional_slots` contiene
+la reserva comprometida y `reschedule_request_id` la retención provisional;
+esto permite conservar la franja original durante `PENDING` y moverla de forma
+atómica al aprobar.
+
+Los índices de consulta cubren paciente-fecha, profesional-fecha, estado,
+bloque-fecha, slot-inicio y solicitudes por estado. V5 contiene únicamente
+usuarios y oferta sintéticos para demo.
 
 Fuente: [requisitos 3FN](../raw/requisitos-normalizacion-3fn.md).

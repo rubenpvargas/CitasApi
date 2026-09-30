@@ -2,7 +2,7 @@
 id: HU-003
 tipo: historia-de-usuario
 titulo: Renovar y cerrar sesión
-estado: En desarrollo
+estado: Completada
 epica: "[[EP-001-identidad-y-acceso]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 1

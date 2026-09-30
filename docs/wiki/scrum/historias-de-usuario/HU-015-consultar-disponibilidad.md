@@ -2,7 +2,7 @@
 id: HU-015
 tipo: historia-de-usuario
 titulo: Consultar disponibilidad
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-003-profesionales-y-disponibilidad]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 3

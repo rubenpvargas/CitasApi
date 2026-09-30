@@ -2,7 +2,7 @@
 id: HU-005
 tipo: historia-de-usuario
 titulo: Consultar y actualizar perfil
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-002-perfil-y-catalogos]]"
 esfuerzo: Medio
 sprint_sugerido: Incremento 2

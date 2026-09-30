@@ -54,7 +54,10 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/logout").permitAll()
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/password-reset/request",
+                                "/api/v1/auth/password-reset/confirm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt -> jwt.decoder(jwtTokens.accessDecoder())

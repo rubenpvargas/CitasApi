@@ -1,0 +1,96 @@
+{
+  "name": "WF-001 - Appointment reminders",
+  "id": "wf001-s2-s6",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "wf001-schedule",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{($env.CITAS_API_URL || 'http://citas-api:8080') + '/api/v1/admin/automation/appointments/reminders'}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "hours",
+              "value": "24"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "wf001-api",
+      "name": "Get upcoming approved appointments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Citas API ADMIN JWT (configure in n8n)"
+        }
+      },
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => item.json.status === 'APPROVED').map(item => ({ json: { ...item.json, reminderWindow: '24h', workflow: 'WF-001' } }));"
+      },
+      "id": "wf001-filter",
+      "name": "Keep approved appointments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{$json.patientEmail}}",
+        "subject": "Recordatorio de cita - FCV Demo",
+        "message": "={{'Recordatorio: tienes una cita aprobada el ' + $json.startAt + '. Este mensaje pertenece al entorno sintético de FCV.'}}"
+      },
+      "id": "wf001-gmail",
+      "name": "Send synthetic reminder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1020, 300]
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [[{ "node": "Get upcoming approved appointments", "type": "main", "index": 0 }]]
+    },
+    "Get upcoming approved appointments": {
+      "main": [[{ "node": "Keep approved appointments", "type": "main", "index": 0 }]]
+    },
+    "Keep approved appointments": {
+      "main": [[{ "node": "Send synthetic reminder", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "wf001-s2-s6",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

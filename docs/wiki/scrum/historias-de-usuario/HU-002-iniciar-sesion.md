@@ -2,7 +2,7 @@
 id: HU-002
 tipo: historia-de-usuario
 titulo: Iniciar sesión
-estado: En desarrollo
+estado: Completada
 epica: "[[EP-001-identidad-y-acceso]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 1

@@ -2,7 +2,7 @@
 id: HU-016
 tipo: historia-de-usuario
 titulo: Reservar cita general
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-004-ciclo-de-vida-de-citas]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 4

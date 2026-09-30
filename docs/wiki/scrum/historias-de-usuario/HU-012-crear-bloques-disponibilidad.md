@@ -2,7 +2,7 @@
 id: HU-012
 tipo: historia-de-usuario
 titulo: Crear bloques de disponibilidad
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-003-profesionales-y-disponibilidad]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 3

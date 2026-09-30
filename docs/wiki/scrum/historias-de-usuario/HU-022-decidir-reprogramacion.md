@@ -2,7 +2,7 @@
 id: HU-022
 tipo: historia-de-usuario
 titulo: Decidir reprogramación
-estado: Pendiente de aprobación
+estado: Completada
 epica: "[[EP-005-reprogramacion]]"
 esfuerzo: Alto
 sprint_sugerido: Incremento 5
