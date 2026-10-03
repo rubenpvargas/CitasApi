@@ -382,3 +382,16 @@ Los ítems `reschedules` de `GET /admin/inbox` incluyen `currentStartAt`,
 devuelve solo citas `APPROVED` con `startAt ∈ [ahora + hours − windowMinutes,
 ahora + hours)` (`1 ≤ hours ≤ 72`, `15 ≤ windowMinutes ≤ 120`, por defecto 60).
 Con disparo horario cada cita aparece en una única ejecución.
+
+## IMPLEMENTACIÓN — Olas D/E parcial (2026-10-03, HU-016 a HU-021)
+
+Backend `398268a`, `5e70722`, `c00ac79`, `1588ed5`, `581ffa8` (V9:
+`reschedule_request_history`, fuente `PROFESSIONAL`, FK de retención). Precisiones:
+- `/appointments/**` (reservar, listar, detalle, cancelar, reprogramar) exige `USER`.
+- Especializada con especialidad general → `400 VALIDATION_ERROR` (`specialtyId`);
+  inicio pasado → `409 SLOT_UNAVAILABLE`.
+- 409 adicionales: `SPECIALTY_NOT_ASSIGNED`, `LOCATION_NOT_ASSIGNED`,
+  `PROFESSIONAL_INACTIVE`, `CATALOG_INACTIVE`; profesional/especialidad/sede
+  inexistente → 404.
+- Cancelación y decisión ADMIN → `200 AppointmentDto`.
+- `GET /appointments`: `status` inválido o rango invertido → 400 (sin tope de 31 días).
