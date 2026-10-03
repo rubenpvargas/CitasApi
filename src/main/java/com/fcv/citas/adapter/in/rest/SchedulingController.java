@@ -29,8 +29,6 @@ public class SchedulingController {
 
 
 
-    @GetMapping("/professional/calendar") @PreAuthorize("hasRole('PROFESSIONAL')")
-    List<Map<String,Object>> calendar(@AuthenticationPrincipal Jwt jwt,@RequestParam LocalDate from,@RequestParam LocalDate to){return service.calendar(userId(jwt),from,to);}
     @GetMapping("/professional/agenda") @PreAuthorize("hasRole('PROFESSIONAL')")
     List<Map<String,Object>> agenda(@AuthenticationPrincipal Jwt jwt,@RequestParam LocalDate from,@RequestParam LocalDate to,@RequestParam(required=false) String locationCode){return service.professionalAgenda(userId(jwt),from,to,locationCode);}
     @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")

@@ -31,12 +31,6 @@ public class SchedulingService {
         this.clock = clock;
     }
 
-    public List<Map<String, Object>> calendar(long userId, LocalDate from, LocalDate to) {
-        long professionalId = professionalId(userId);
-        return jdbc.queryForList("SELECT b.id,b.available_date availableDate,b.start_time startTime,b.end_time endTime,l.code locationCode,l.name locationName "
-                + "FROM availability_blocks b JOIN locations l ON l.id=b.location_id WHERE b.professional_id=? AND b.active=TRUE AND b.available_date BETWEEN ? AND ? ORDER BY b.available_date,b.start_time", professionalId, from, to);
-    }
-
     public List<Map<String, Object>> availability(String locationCode, Long specialtyId, Long professionalId, LocalDate date) {
         StringBuilder sql = new StringBuilder("SELECT ps.id,ps.start_at startAt,ps.end_at endAt,p.id professionalId,u.first_name firstName,u.last_name lastName,s.id specialtyId,s.code specialtyCode,s.name specialtyName,s.appointment_duration_minutes durationMinutes,l.code locationCode,l.name locationName ")
                 .append("FROM professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id JOIN professionals p ON p.id=b.professional_id JOIN users u ON u.id=p.user_id JOIN professional_specialties psp ON psp.professional_id=p.id AND psp.active=TRUE JOIN specialties s ON s.id=psp.specialty_id AND s.active=TRUE JOIN locations l ON l.id=b.location_id WHERE ps.appointment_id IS NULL AND ps.reschedule_request_id IS NULL AND b.active=TRUE AND p.active=TRUE AND b.available_date>=CURRENT_DATE");

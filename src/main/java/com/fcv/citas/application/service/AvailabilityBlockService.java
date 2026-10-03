@@ -89,6 +89,19 @@ public final class AvailabilityBlockService implements AvailabilityBlockUseCase 
         });
     }
 
+    @Override
+    public java.util.List<com.fcv.citas.application.model.CalendarEntry> calendar(long userId, java.time.LocalDate from,
+                                                                               java.time.LocalDate to, String locationCode) {
+        ProfessionalAccount account = account(userId);
+        DateRanges.require(from, to);
+        LocalDateTime now = LocalDateTime.now(clock);
+        String location = locationCode == null || locationCode.isBlank() ? null
+                : locationCode.trim().toUpperCase(java.util.Locale.ROOT);
+        return blocks.findCalendar(account.professionalId(), from, to, location).stream()
+                .map(block -> new com.fcv.citas.application.model.CalendarEntry(block, block.notEditableReason(now)))
+                .toList();
+    }
+
     private void requireEditable(ProfessionalAccount account, long blockId, LocalDateTime now) {
         blocks.findActiveOwned(blockId, account.professionalId())
                 .orElseThrow(() -> new NotFoundException("Availability block not found"));
