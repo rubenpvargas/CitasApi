@@ -23,10 +23,10 @@ relacionadas: ["[[HU-003-renovar-y-cerrar-sesion]]"]
 ## Esfuerzo
 **Nivel:** Alto. **Justificación:** seguridad, contratos, persistencia de refresh y UI por rol.
 ## Tareas de desarrollo
-- [ ] **T-01 — Diseñar contrato de login y respuesta segura**. Dificultad: Alto.
-- [ ] **T-02 — Implementar autenticación y emisión JWT**. Dificultad: Alto. Spring Security, hash y claims de rol.
-- [ ] **T-03 — Integrar pantalla y contexto de sesión**. Dificultad: Medio. Estados de error y navegación autorizada.
-- [ ] **T-04 — Probar credenciales válidas, inválidas y roles**. Dificultad: Alto.
+- [x] **T-01 — Diseñar contrato de login y respuesta segura**. Dificultad: Alto.
+- [x] **T-02 — Implementar autenticación y emisión JWT**. Dificultad: Alto. Spring Security, hash y claims de rol.
+- [x] **T-03 — Integrar pantalla y contexto de sesión**. Dificultad: Medio. Estados de error y navegación autorizada.
+- [x] **T-04 — Probar credenciales válidas, inválidas y roles**. Dificultad: Alto.
 ## Criterios de aceptación
 ### CA-01 — Acceso válido
 **Dado** credenciales válidas **cuando** inicia sesión **entonces** recibe sesión con access y refresh separados y accede a su contexto de rol.
@@ -35,19 +35,24 @@ relacionadas: ["[[HU-003-renovar-y-cerrar-sesion]]"]
 ### CA-03 — Aislamiento por rol
 **Dado** una sesión autenticada **cuando** solicita una capacidad no autorizada **entonces** el backend la deniega.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados; tokens/contraseñas no se registran.
-- [ ] Secretos se obtienen solo desde configuración de entorno.
-- [ ] Contrato, cliente REST y protección de rutas UI son coherentes; backend conserva la autoridad.
-- [ ] Pruebas de seguridad y trazabilidad Scrum disponibles.
+- [x] CA-01 a CA-03 validados; tokens/contraseñas no se registran.
+- [x] Secretos se obtienen solo desde configuración de entorno.
+- [x] Contrato, cliente REST y protección de rutas UI son coherentes; backend conserva la autoridad.
+- [x] Pruebas de seguridad y trazabilidad Scrum disponibles.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Pendiente | — | — |
-| CA-02 | Pendiente | — | — |
-| CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `LoginAndRoleIsolationIT`, `AuthenticationServiceTest`, `JwtTokenAdapterTest`: access y refresh separados, `roles` solo en access; smoke: 200 | API `2fdb2a8` |
+| CA-02 | Conforme | Email desconocido y clave errónea devuelven cuerpo idéntico `INVALID_CREDENTIALS` (401) | Sin revelar el dato fallido |
+| CA-03 | Conforme | USER → 403 en `/admin/eps`, `/admin/inbox`, `/professional/calendar`; sin token, token alterado, expirado o refresh usado como access → 401; smoke: 403 | Autoridad en backend |
+| DoD secretos | Conforme | `SecurityPropertiesTest`: secretos JWT solo por entorno, sin valores por defecto, longitud y distinción exigidas | — |
+| DoD UI | Conforme | Web `6099f8e`, `bd91419`: rutas con `authGuard`/`roleGuard`, login sin credenciales precargadas, error `role=alert`; `auth.guards.spec` (10), `login.spec` (11) | Guards son solo UX |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
 - 2026-09-17 — Aprobada explícitamente por el usuario para el incremento backend HU-001 a HU-003.
 - 2026-09-17 — Desarrollo backend iniciado en la rama `develop`; UI permanece fuera de alcance.
+- 2026-10-02 — Revalidada: pruebas de seguridad 401/403 y UI con guards por rol (API `2fdb2a8`; web `6099f8e`, `bd91419`).
+
 ## Notas y decisiones
 - La ubicación de tokens en el cliente se definirá con el contrato de seguridad.

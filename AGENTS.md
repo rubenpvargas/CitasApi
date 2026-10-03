@@ -2,11 +2,28 @@
 
 ## Estado verificado del repositorio
 
-El repositorio es un esqueleto: todavía no contiene `pom.xml` ni `src/`. No
-asumir estructura de paquetes, comandos de build, librerías adicionales ni un
-contrato REST ya existente. Antes de implementar, inspeccionar el proyecto que
-se haya inicializado y actualizar estas instrucciones solo con evidencia.
+Verificado el 2026-10-02 (Ola A, HU-001 a HU-004 y HU-007):
 
+- Proyecto Spring Boot 3.5.16 / Java 21 / Maven (`pom.xml`, paquete raíz
+  `com.fcv.citas`): `domain`, `application` (casos de uso, puertos `in`/`out`,
+  excepciones), `adapter/in/rest`, `adapter/out/persistence`,
+  `adapter/out/security` y `config`.
+- Migraciones Flyway `V1`..`V8` en `src/main/resources/db/migration`; V5 siembra
+  cuentas y oferta demo sintéticas (`*@demo.invalid`).
+- Errores REST: Problem Details con `code` estable (`ApiExceptionHandler`):
+  400 `VALIDATION_ERROR`/`INVALID_REQUEST`, 401, 403 `FORBIDDEN`, 404
+  `NOT_FOUND`, 409 reglas de negocio. Usar `NotFoundException`,
+  `ForbiddenException` y `BusinessRuleException` en código nuevo.
+- Comandos:
+  - `mvn -B test`: unitarias y slices, sin base de datos.
+  - `mvn -B -Pit verify`: además pruebas `*IT.java` REST + persistencia contra
+    MySQL 8.4 real. Requiere `IT_DB_URL`, `IT_DB_USER`, `IT_DB_PASSWORD` por
+    entorno; la base indicada se limpia y migra desde vacío (solo bases
+    desechables). Base común: `src/test/java/com/fcv/citas/it/AbstractMySqlIT`.
+- Deuda conocida: `SchedulingService` (perfil, oferta ADMIN, agenda, citas,
+  reprogramación) usa `JdbcTemplate`/SQL y anotaciones Spring en la capa de
+  aplicación y `BusinessException` genérica; debe refactorizarse a puertos y
+  adaptadores en olas posteriores. La identidad ya sigue el estilo hexagonal.
 ## Alcance de este repositorio
 
 Implementar únicamente el backend del sistema de citas: Java 21, Spring Boot

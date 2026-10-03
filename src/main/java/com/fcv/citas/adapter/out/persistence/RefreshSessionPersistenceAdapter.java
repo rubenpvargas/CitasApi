@@ -1,13 +1,15 @@
 package com.fcv.citas.adapter.out.persistence;
 
 import com.fcv.citas.application.port.out.RefreshSessionRepositoryPort;
+import com.fcv.citas.application.port.out.RefreshSessionRevocationPort;
 import com.fcv.citas.domain.model.RefreshSession;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Component
-public class RefreshSessionPersistenceAdapter implements RefreshSessionRepositoryPort {
+public class RefreshSessionPersistenceAdapter implements RefreshSessionRepositoryPort, RefreshSessionRevocationPort {
     private final SpringDataRefreshSessionRepository sessions;
     private final SpringDataUserRepository users;
 
@@ -35,6 +37,11 @@ public class RefreshSessionPersistenceAdapter implements RefreshSessionRepositor
     @Override
     public Optional<RefreshSession> findByTokenHashForUpdate(String tokenHash) {
         return sessions.findByTokenHashForUpdate(tokenHash).map(this::toDomain);
+    }
+
+    @Override
+    public void revokeAllForUser(long userId, Instant at) {
+        sessions.revokeAllForUser(userId, at);
     }
 
     private RefreshSession toDomain(RefreshSessionJpaEntity entity) {

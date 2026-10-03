@@ -30,95 +30,8 @@ public class SchedulingService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Map<String, Object> profile(long userId) {
-        return one("SELECT id, first_name firstName, last_name lastName, document_type documentType, "
-                + "document_number documentNumber, email, phone FROM users WHERE id=? AND active=TRUE", userId);
-    }
-
-    @Transactional
-    public Map<String, Object> updateProfile(long userId, String firstName, String lastName, String phone) {
-        jdbc.update("UPDATE users SET first_name=?, last_name=?, phone=?, updated_at=NOW(6) WHERE id=?",
-                firstName, lastName, phone, userId);
-        return profile(userId);
-    }
-
-    public List<Map<String, Object>> affiliations(long userId) {
-        return jdbc.queryForList("SELECT a.id, a.membership_number membershipNumber, a.is_current current, "
-                + "p.id planId, p.code planCode, p.name planName, e.id epsId, e.code epsCode, e.name epsName, "
-                + "r.code regimeCode, r.name regimeName FROM user_insurance_affiliations a "
-                + "JOIN eps_plans p ON p.id=a.plan_id JOIN eps e ON e.id=p.eps_id "
-                + "JOIN insurance_regimes r ON r.id=p.regime_id WHERE a.user_id=? ORDER BY a.is_current DESC, a.id DESC", userId);
-    }
-
-    @Transactional
-    public Map<String, Object> saveAffiliation(long userId, long planId, String membershipNumber) {
-        Map<String, Object> plan = one("SELECT p.id FROM eps_plans p JOIN eps e ON e.id=p.eps_id "
-                + "WHERE p.id=? AND p.active=TRUE AND e.active=TRUE", planId);
-        jdbc.update("UPDATE user_insurance_affiliations SET is_current=FALSE, valid_to=CURDATE() "
-                + "WHERE user_id=? AND is_current=TRUE", userId);
-        jdbc.update("INSERT INTO user_insurance_affiliations(user_id,plan_id,membership_number,is_current,valid_from,created_at) "
-                + "VALUES(?,?,?,TRUE,CURDATE(),NOW(6))", userId, plan.get("id"), membershipNumber);
-        return affiliations(userId).get(0);
-    }
-
-    public List<Map<String, Object>> eps() {
-        return jdbc.queryForList("SELECT id, code, name, active FROM eps ORDER BY name");
-    }
-
     public List<Map<String, Object>> locations() {
         return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
-    }
-
-    @Transactional
-    public Map<String, Object> createEps(String code, String name) {
-        jdbc.update("INSERT INTO eps(code,name,active,created_at,updated_at) VALUES(?,?,TRUE,NOW(6),NOW(6))", code, name);
-        return one("SELECT id,code,name,active FROM eps WHERE code=?", code);
-    }
-
-    @Transactional
-    public Map<String, Object> updateEps(long id, String name, boolean active) {
-        jdbc.update("UPDATE eps SET name=?, active=?, updated_at=NOW(6) WHERE id=?", name, active, id);
-        return one("SELECT id,code,name,active FROM eps WHERE id=?", id);
-    }
-
-    public List<Map<String, Object>> plans(Long epsId) {
-        String sql = "SELECT p.id,p.code,p.name,p.active,p.eps_id epsId,e.code epsCode,e.name epsName, "
-                + "r.id regimeId,r.code regimeCode,r.name regimeName FROM eps_plans p JOIN eps e ON e.id=p.eps_id "
-                + "JOIN insurance_regimes r ON r.id=p.regime_id";
-        if (epsId == null) return jdbc.queryForList(sql + " ORDER BY e.name,p.name");
-        return jdbc.queryForList(sql + " WHERE p.eps_id=? ORDER BY p.name", epsId);
-    }
-
-    @Transactional
-    public Map<String, Object> createPlan(long epsId, long regimeId, String code, String name) {
-        jdbc.update("INSERT INTO eps_plans(eps_id,regime_id,code,name,active) VALUES(?,?,?,?,TRUE)", epsId, regimeId, code, name);
-        return one("SELECT id,code,name,active,eps_id epsId,regime_id regimeId FROM eps_plans WHERE eps_id=? AND code=?", epsId, code);
-    }
-
-    @Transactional
-    public Map<String, Object> updatePlan(long id, String name, boolean active) {
-        jdbc.update("UPDATE eps_plans SET name=?, active=? WHERE id=?", name, active, id);
-        return one("SELECT id,code,name,active,eps_id epsId,regime_id regimeId FROM eps_plans WHERE id=?", id);
-    }
-
-    public List<Map<String, Object>> specialties() {
-        return jdbc.queryForList("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general, "
-                + "requires_admin_approval requiresAdminApproval,active FROM specialties ORDER BY name");
-    }
-
-    @Transactional
-    public Map<String, Object> createSpecialty(String code, String name, int durationMinutes, boolean general) {
-        checkDuration(durationMinutes);
-        jdbc.update("INSERT INTO specialties(code,name,appointment_duration_minutes,is_general,requires_admin_approval,active) "
-                + "VALUES(?,?,?, ?, ?, TRUE)", code, name, durationMinutes, general, !general);
-        return one("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general,active FROM specialties WHERE code=?", code);
-    }
-
-    @Transactional
-    public Map<String, Object> updateSpecialty(long id, String name, int durationMinutes, boolean active) {
-        checkDuration(durationMinutes);
-        jdbc.update("UPDATE specialties SET name=?, appointment_duration_minutes=?, active=? WHERE id=?", name, durationMinutes, active, id);
-        return one("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general,active FROM specialties WHERE id=?", id);
     }
 
     public List<Map<String, Object>> professionals() {
@@ -296,6 +209,5 @@ public class SchedulingService {
     private long professionalId(long userId){List<Map<String,Object>>rows=jdbc.queryForList("SELECT id FROM professionals WHERE user_id=? AND active=TRUE",userId);if(rows.isEmpty())throw new BusinessException("PROFESSIONAL_REQUIRED","An active professional profile is required");return ((Number)rows.get(0).get("id")).longValue();}
     private long locationId(String code){return ((Number)one("SELECT id FROM locations WHERE code=? AND active=TRUE",code).get("id")).longValue();}
     private long statusId(String table,String code){return ((Number)one("SELECT id FROM "+table+" WHERE code=?",code).get("id")).longValue();}
-    private void checkDuration(int duration){if(duration!=30&&duration!=60)throw new BusinessException("INVALID_DURATION","Duration must be 30 or 60 minutes");}
     private Map<String,Object> one(String sql,Object...args){List<Map<String,Object>>rows=jdbc.queryForList(sql,args);if(rows.isEmpty())throw new BusinessException("NOT_FOUND","Requested resource was not found");return new HashMap<>(rows.get(0));}
 }

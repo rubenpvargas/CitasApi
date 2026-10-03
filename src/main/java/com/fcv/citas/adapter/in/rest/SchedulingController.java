@@ -25,44 +25,10 @@ public class SchedulingController {
 
     public SchedulingController(SchedulingService service) { this.service = service; }
 
-    @GetMapping("/me")
-    Map<String,Object> profile(@AuthenticationPrincipal Jwt jwt) { return service.profile(userId(jwt)); }
-
-    @PatchMapping("/me")
-    Map<String,Object> updateProfile(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ProfileRequest request) {
-        return service.updateProfile(userId(jwt), request.firstName(), request.lastName(), request.phone());
-    }
-
-    @GetMapping("/me/affiliations")
-    List<Map<String,Object>> affiliations(@AuthenticationPrincipal Jwt jwt) { return service.affiliations(userId(jwt)); }
-
-    @PutMapping("/me/affiliations")
-    Map<String,Object> affiliation(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AffiliationRequest request) {
-        return service.saveAffiliation(userId(jwt), request.planId(), request.membershipNumber());
-    }
-
-    @GetMapping("/admin/eps") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> eps() { return service.eps(); }
     @GetMapping("/admin/locations") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> locations() { return service.locations(); }
-    @PostMapping("/admin/eps") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createEps(@Valid @RequestBody EpsRequest r) { return service.createEps(r.code(),r.name()); }
-    @PatchMapping("/admin/eps/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updateEps(@PathVariable long id,@Valid @RequestBody CatalogUpdateRequest r){return service.updateEps(id,r.name(),r.active());}
 
-    @GetMapping("/admin/plans") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> plans(@RequestParam(required=false) Long epsId){return service.plans(epsId);}
-    @PostMapping("/admin/eps/{epsId}/plans") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createPlan(@PathVariable long epsId,@Valid @RequestBody PlanRequest r){return service.createPlan(epsId,r.regimeId(),r.code(),r.name());}
-    @PatchMapping("/admin/plans/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updatePlan(@PathVariable long id,@Valid @RequestBody CatalogUpdateRequest r){return service.updatePlan(id,r.name(),r.active());}
 
-    @GetMapping("/admin/specialties")
-    List<Map<String,Object>> specialties(){return service.specialties();}
-    @PostMapping("/admin/specialties") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createSpecialty(@Valid @RequestBody SpecialtyRequest r){return service.createSpecialty(r.code(),r.name(),r.durationMinutes(),r.general());}
-    @PatchMapping("/admin/specialties/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updateSpecialty(@PathVariable long id,@Valid @RequestBody SpecialtyUpdateRequest r){return service.updateSpecialty(id,r.name(),r.durationMinutes(),r.active());}
 
     @GetMapping("/admin/professionals") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> professionals(){return service.professionals();}
@@ -108,13 +74,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record ProfileRequest(@NotBlank @Size(max=100) String firstName,@NotBlank @Size(max=100) String lastName,@NotBlank @Size(max=32) String phone){}
-    record AffiliationRequest(@NotNull Long planId,@NotBlank @Size(max=80) String membershipNumber){}
-    record EpsRequest(@NotBlank @Size(max=40) String code,@NotBlank @Size(max=160) String name){}
-    record CatalogUpdateRequest(@NotBlank @Size(max=160) String name,boolean active){}
-    record PlanRequest(@NotNull Long regimeId,@NotBlank String code,@NotBlank String name){}
-    record SpecialtyRequest(@NotBlank String code,@NotBlank String name,@NotNull Integer durationMinutes,boolean general){}
-    record SpecialtyUpdateRequest(@NotBlank String name,@NotNull Integer durationMinutes,boolean active){}
     record ProfessionalRequest(@NotBlank String firstName,@NotBlank String lastName,@NotBlank String documentType,@NotBlank String documentNumber,@Email @NotBlank String email,@NotBlank String phone,@NotBlank @Size(min=8,max=72) String password,@NotBlank String professionalCode,@NotBlank String licenseNumber){}
     record CapabilitiesRequest(@NotNull List<Long> specialtyIds,Long primarySpecialtyId,@NotNull List<Long> locationIds,boolean active){}
     record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}

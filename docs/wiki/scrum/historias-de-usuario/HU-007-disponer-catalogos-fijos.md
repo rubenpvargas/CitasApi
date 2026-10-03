@@ -39,12 +39,15 @@ relacionadas: ["[[HU-001-registrar-usuario]]", "[[HU-006-gestionar-afiliacion]]"
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01 | Conforme | V3 aplicada; roles USER/PROFESSIONAL/ADMIN y sedes HIC/ICV verificadas en MySQL local | Catálogos y seeds reproducibles |
-| CA-02 | Conforme | `GET /api/v1/catalogs`: 401 sin JWT, 200 con JWT; POST: 405 | Consulta autenticada, sin CRUD de escritura |
-| Pruebas | Conforme | `docker compose exec -T citas-api-dev mvn test` | 11 pruebas, 0 fallos |
+| CA-01 | Conforme | `FixedCatalogsIT` y `FlywayEmptyDatabaseIT`: V1..V8 desde esquema vacío, roles USER/PROFESSIONAL/ADMIN y sedes HIC/ICV | API `d2ce597` |
+| CA-02 | Conforme | `GET /api/v1/catalogs`: 401 sin JWT, 200 con JWT (5 catálogos); POST 405 `METHOD_NOT_ALLOWED` | Sin CRUD de escritura |
+| Pruebas | Conforme | `mvn -Pit verify`: 42 unitarias + 38 IT, 0 fallos | Reabierta y revalidada tras V8 |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
 - 2026-09-24 — Inicio autorizado explícitamente por el usuario para probar y corregir la HU-007.
 - 2026-09-24 — Completada: contrato, V3 Flyway, pruebas Maven y pruebas HTTP locales validadas.
+- 2026-10-02 — Reabierta por migración V8 y revalidada desde base vacía (API `d2ce597`).
+
 ## Notas y decisiones
 - Las representaciones API se acuerdan antes de consumirlas.

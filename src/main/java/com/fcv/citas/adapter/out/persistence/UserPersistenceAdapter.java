@@ -1,6 +1,7 @@
 package com.fcv.citas.adapter.out.persistence;
 
 import com.fcv.citas.application.exception.DuplicateIdentifierException;
+import com.fcv.citas.application.port.out.UserCredentialPort;
 import com.fcv.citas.application.port.out.UserRepositoryPort;
 import com.fcv.citas.domain.model.User;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class UserPersistenceAdapter implements UserRepositoryPort {
+public class UserPersistenceAdapter implements UserRepositoryPort, UserCredentialPort {
     private final SpringDataUserRepository users;
     private final SpringDataRoleRepository roles;
     private final Clock clock;
@@ -59,6 +60,13 @@ public class UserPersistenceAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findById(Long id) {
         return users.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public void updatePasswordHash(long userId, String passwordHash, Instant at) {
+        if (users.updatePasswordHash(userId, passwordHash, at) != 1) {
+            throw new IllegalStateException("User credential update affected an unexpected number of rows");
+        }
     }
 
     private User toDomain(UserJpaEntity entity) {
