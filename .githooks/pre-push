@@ -1,0 +1,5 @@
+#!/bin/sh
+# Ejecuta las pruebas unitarias y de slice antes de publicar. Las IT (perfil it)
+# requieren MySQL y se ejecutan aparte: mvn -B -Pit verify.
+echo "pre-push: mvn -q -B test" >&2
+mvn -q -B test || { echo "pre-push: pruebas en rojo, push cancelado." >&2; exit 1; }
