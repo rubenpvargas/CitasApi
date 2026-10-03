@@ -309,3 +309,17 @@ Implementado conforme al plan con estas precisiones (HECHO):
   `415 UNSUPPORTED_MEDIA_TYPE`, `500 INTERNAL_ERROR` (cuerpo genérico).
 - Registro duplicado conserva `409 IDENTIFIER_ALREADY_REGISTERED` (no revela
   si fue email o documento).
+
+## IMPLEMENTACIÓN — Ola B (2026-10-03, pendiente de verificación independiente)
+
+Backend `704db7e`, `6766460`, `cf886f0`, `6197955`; web `c5ea141`…`199ce56`.
+Precisiones respecto al plan (HECHO, a validar en el cierre de la ola):
+- Planes ADMIN planos `{id, code, name, active, epsId, epsCode, epsName,
+  regimeId, regimeCode, regimeName}`; afiliación plana; especialidad ADMIN
+  incluye `requiresAdminApproval`.
+- `409 DUPLICATE_NAME` (especialidad); códigos de catálogo `[A-Za-z0-9_-]+`
+  almacenados en mayúsculas; `active` obligatorio en actualizaciones.
+- `/me/affiliations` exige `USER`; `/me` admite cualquier rol autenticado.
+- PREGUNTA ABIERTA: `GET /catalogs` no expone `id` de regímenes que
+  `POST /admin/eps/{id}/plans` requiere (`regimeId`); resolver en Ola C
+  (añadir `id` o aceptar `regimeCode`).
