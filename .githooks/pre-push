@@ -1,5 +1,15 @@
 #!/bin/sh
 # Ejecuta las pruebas unitarias y de slice antes de publicar. Las IT (perfil it)
 # requieren MySQL y se ejecutan aparte: mvn -B -Pit verify.
+# Si Maven no está disponible en esta terminal, avisa y no bloquea el push.
+# Omitir explícitamente: SKIP_PREPUSH=1 git push
+if [ "${SKIP_PREPUSH:-0}" = "1" ]; then
+  echo "pre-push: omitido por SKIP_PREPUSH=1" >&2
+  exit 0
+fi
+if ! command -v mvn >/dev/null 2>&1; then
+  echo "pre-push: AVISO: Maven no está en el PATH; no se ejecutaron pruebas antes del push." >&2
+  exit 0
+fi
 echo "pre-push: mvn -q -B test" >&2
 mvn -q -B test || { echo "pre-push: pruebas en rojo, push cancelado." >&2; exit 1; }
