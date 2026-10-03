@@ -137,6 +137,28 @@ public abstract class AbstractMySqlIT {
                 .andExpect(status().isCreated()).andReturn()).get("id").asLong();
     }
 
+    /**
+     * Fixture SQL sintético: una cita APPROVED del profesional demo 9001 y una reprogramación PENDING
+     * real (respeta fk_slot_reschedule_request) para simular retenciones en pruebas de agenda.
+     */
+    protected long syntheticPendingRescheduleId() throws Exception {
+        String email = registerUser();
+        long userId = jdbc.queryForObject("SELECT id FROM users WHERE email = ?", Long.class, email);
+        java.time.LocalDateTime start = agendaToday().plusDays(60).atTime(7, 0);
+        jdbc.update("INSERT INTO appointments(patient_user_id, professional_id, location_id, specialty_id, status_id, "
+                + "scheduled_start_at, scheduled_end_at, created_by_user_id, created_at, updated_at) "
+                + "SELECT ?, 9001, l.id, s.id, st.id, ?, ?, ?, NOW(6), NOW(6) FROM locations l, specialties s, "
+                + "appointment_statuses st WHERE l.code = 'HIC' AND s.code = 'MEDICINA_GENERAL' AND st.code = 'APPROVED'",
+                userId, start, start.plusMinutes(30), userId);
+        long appointmentId = jdbc.queryForObject("SELECT MAX(id) FROM appointments WHERE patient_user_id = ?", Long.class, userId);
+        jdbc.update("INSERT INTO reschedule_requests(appointment_id, requested_by_user_id, requested_location_id, status_id, "
+                + "previous_start_at, previous_end_at, requested_start_at, requested_end_at, created_at) "
+                + "SELECT ?, ?, l.id, rs.id, ?, ?, ?, ?, NOW(6) FROM locations l, reschedule_request_statuses rs "
+                + "WHERE l.code = 'HIC' AND rs.code = 'PENDING'",
+                appointmentId, userId, start, start.plusMinutes(30), start.plusDays(1), start.plusDays(1).plusMinutes(30));
+        return jdbc.queryForObject("SELECT MAX(id) FROM reschedule_requests WHERE appointment_id = ?", Long.class, appointmentId);
+    }
+
     protected String userToken() throws Exception {
         return tokenWithRoles();
     }

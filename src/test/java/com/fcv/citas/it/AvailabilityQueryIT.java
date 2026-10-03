@@ -25,8 +25,8 @@ class AvailabilityQueryIT extends AbstractMySqlIT {
         long block = createBlock(pro.token(), day, "08:00", "10:00", "HIC");
         createBlock(pro.token(), day, "10:00", "10:30", "HIC");
         // Retención de reprogramación sobre el slot 08:30: rompe 08:00 y 08:30 como inicios de 60 min.
-        jdbc.update("UPDATE professional_slots SET reschedule_request_id = 999998 WHERE availability_block_id = ? "
-                + "AND start_at = ?", block, day.atTime(8, 30));
+        jdbc.update("UPDATE professional_slots SET reschedule_request_id = ? WHERE availability_block_id = ? "
+                + "AND start_at = ?", syntheticPendingRescheduleId(), block, day.atTime(8, 30));
 
         JsonNode offers = search(Map.of("specialtyId", specialtyId("ORTOPEDIA_TRAUMATOLOGIA"), "from", day, "to", day,
                 "professionalId", pro.id()));

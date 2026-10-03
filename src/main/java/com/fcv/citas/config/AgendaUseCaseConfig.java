@@ -14,6 +14,7 @@ import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
 import com.fcv.citas.application.port.out.AvailabilityBlockRepositoryPort;
 import com.fcv.citas.application.port.out.AppointmentRepositoryPort;
 import com.fcv.citas.application.port.out.AvailabilityQueryPort;
+import com.fcv.citas.application.port.out.RescheduleRepositoryPort;
 import com.fcv.citas.application.port.out.SlotRepositoryPort;
 import com.fcv.citas.application.port.out.InsuranceCatalogRepositoryPort;
 import com.fcv.citas.application.port.out.PasswordHashPort;
@@ -95,8 +96,9 @@ public class AgendaUseCaseConfig {
     }
 
     @Bean
-    MyAppointmentsUseCase myAppointmentsUseCase(AppointmentRepositoryPort appointments, TransactionPort transactions,
+    MyAppointmentsUseCase myAppointmentsUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
+                                                RescheduleRepositoryPort reschedules, TransactionPort transactions,
                                                 Clock clock) {
-        return new MyAppointmentsService(appointments, transactions, clock);
+        return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock);
     }
 }

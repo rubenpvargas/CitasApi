@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** HU-019 — consulta de citas propias: ownership, filtros válidos. */
 class MyAppointmentsServiceTest {
     final InMemoryAppointments repo = new InMemoryAppointments();
-    final MyAppointmentsService service = new MyAppointmentsService(repo, new DirectTransactions(), CLOCK);
+    final MyAppointmentsService service = new MyAppointmentsService(repo, null, null, new DirectTransactions(), CLOCK);
 
     static Appointment appointment(long id, long patient, AppointmentStatus status, LocalDateTime start) {
         return new Appointment(id, patient, "Paciente", 3L, "Valeria Agenda", 4L, "Cardiologia", false, 5L, "HIC", "Sede HIC",

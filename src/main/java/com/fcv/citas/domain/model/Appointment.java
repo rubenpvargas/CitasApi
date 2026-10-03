@@ -41,6 +41,13 @@ public record Appointment(long id, long patientUserId, String patientName, long 
         return (status == AppointmentStatus.REQUESTED || status == AppointmentStatus.APPROVED) && startAt.isAfter(now);
     }
 
+    /** HU-020 — fuera de REQUESTED|APPROVED o si ya comenzó → INVALID_TRANSITION (no hay reactivación). */
+    public void requireCancellable(LocalDateTime now) {
+        if (!cancellableAt(now)) {
+            throw invalidTransition("Only future requested or approved appointments can be cancelled");
+        }
+    }
+
     /** HU-021 — solo APPROVED futura y sin otra reprogramación PENDING. */
     public boolean reschedulableAt(LocalDateTime now) {
         return status == AppointmentStatus.APPROVED && startAt.isAfter(now) && pendingReschedule == null;

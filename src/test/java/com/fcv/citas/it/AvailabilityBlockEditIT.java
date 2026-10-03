@@ -52,8 +52,8 @@ class AvailabilityBlockEditIT extends AbstractMySqlIT {
                         .content(toJson(Map.of("professionalId", pro.id(), "locationCode", "HIC",
                                 "startAt", day + "T08:30:00", "reason", "Control sintetico"))))
                 .andExpect(status().isCreated());
-        jdbc.update("UPDATE professional_slots SET reschedule_request_id = 999999 WHERE availability_block_id = ? "
-                + "ORDER BY start_at LIMIT 1", held);
+        jdbc.update("UPDATE professional_slots SET reschedule_request_id = ? WHERE availability_block_id = ? "
+                + "ORDER BY start_at LIMIT 1", syntheticPendingRescheduleId(), held);
 
         for (long id : new long[]{booked, held}) {
             edit(pro.token(), id, day.plusDays(1), "08:00", "09:00", "HIC")

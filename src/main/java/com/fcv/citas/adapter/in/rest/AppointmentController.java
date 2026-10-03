@@ -67,6 +67,11 @@ public class AppointmentController {
         return response(mine.get(JwtSubject.userId(jwt), id));
     }
 
+    @PostMapping("/{id}/cancel")
+    AppointmentResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable long id) {
+        return response(mine.cancel(JwtSubject.userId(jwt), id));
+    }
+
     private ResponseEntity<AppointmentResponse> created(Appointment appointment) {
         return ResponseEntity.status(HttpStatus.CREATED).body(response(appointment));
     }

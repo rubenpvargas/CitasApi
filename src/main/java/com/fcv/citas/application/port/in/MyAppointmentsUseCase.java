@@ -11,4 +11,7 @@ public interface MyAppointmentsUseCase {
 
     /** Cita propia; ajena o inexistente → NOT_FOUND. */
     Appointment get(long userId, long appointmentId);
+
+    /** HU-020 — cancela una cita propia futura en REQUESTED|APPROVED. */
+    Appointment cancel(long userId, long appointmentId);
 }
