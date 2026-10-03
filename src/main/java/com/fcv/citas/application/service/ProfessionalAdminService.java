@@ -75,7 +75,31 @@ public final class ProfessionalAdminService implements ProfessionalAdminUseCase 
 
     @Override
     public ProfessionalSummary configure(long professionalId, CapabilitiesCommand command) {
-        throw new UnsupportedOperationException("HU-011 pending");
+        Set<Long> specialtyIds = new LinkedHashSet<>(command.specialtyIds());
+        Set<Long> locationIds = new LinkedHashSet<>(command.locationIds());
+        return transactions.required(() -> {
+            professionals.findById(professionalId).orElseThrow(() -> new NotFoundException("Professional not found"));
+            professionals.lock(professionalId);
+            if (!specialtyIds.contains(command.primarySpecialtyId())) {
+                throw new BusinessRuleException("PRIMARY_NOT_ASSIGNED",
+                        "The primary specialty must be one of the assigned specialties");
+            }
+            for (Long id : specialtyIds) {
+                Specialty specialty = specialties.findById(id).orElseThrow(() -> new NotFoundException("Specialty not found"));
+                if (!specialty.active()) {
+                    throw inactive();
+                }
+            }
+            for (Long id : locationIds) {
+                Location location = professionals.findLocation(id).orElseThrow(() -> new NotFoundException("Location not found"));
+                if (!location.active()) {
+                    throw inactive();
+                }
+            }
+            professionals.replaceCapabilities(professionalId, specialtyIds, command.primarySpecialtyId(), locationIds,
+                    command.active(), clock.instant());
+            return professionals.findById(professionalId).orElseThrow();
+        });
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.fcv.citas.application.service;
 
 import com.fcv.citas.application.exception.BusinessException;
+import com.fcv.citas.application.exception.BusinessRuleException;
+import com.fcv.citas.application.exception.NotFoundException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -28,27 +30,6 @@ public class SchedulingService {
     public SchedulingService(JdbcTemplate jdbc, PasswordEncoder passwordEncoder) {
         this.jdbc = jdbc;
         this.passwordEncoder = passwordEncoder;
-    }
-
-    public List<Map<String, Object>> locations() {
-        return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
-    }
-
-    @Transactional
-    public Map<String, Object> configureProfessional(long professionalId, List<Long> specialtyIds, Long primarySpecialtyId,
-                                                       List<Long> locationIds, boolean active) {
-        jdbc.update("UPDATE professionals SET active=?,updated_at=NOW(6) WHERE id=?", active, professionalId);
-        jdbc.update("UPDATE professional_specialties SET active=FALSE WHERE professional_id=?", professionalId);
-        for (Long id : specialtyIds) {
-            jdbc.update("INSERT INTO professional_specialties(professional_id,specialty_id,is_primary,active) VALUES(?,?,?,TRUE) "
-                    + "ON DUPLICATE KEY UPDATE is_primary=VALUES(is_primary),active=TRUE", professionalId, id, id.equals(primarySpecialtyId));
-        }
-        jdbc.update("UPDATE professional_locations SET active=FALSE WHERE professional_id=?", professionalId);
-        for (Long id : locationIds) {
-            jdbc.update("INSERT INTO professional_locations(professional_id,location_id,active) VALUES(?,?,TRUE) "
-                    + "ON DUPLICATE KEY UPDATE active=TRUE", professionalId, id);
-        }
-        return one("SELECT id,professional_code professionalCode,license_number licenseNumber,active FROM professionals WHERE id=?", professionalId);
     }
 
     @Transactional
@@ -126,13 +107,17 @@ public class SchedulingService {
                 : one("SELECT id,appointment_duration_minutes durationMinutes FROM specialties WHERE id=? AND is_general=FALSE AND active=TRUE", specialtyId);
         long sid = ((Number) specialty.get("id")).longValue();
         int duration = ((Number) specialty.get("durationMinutes")).intValue();
+        List<Boolean> professionalActive = jdbc.queryForList("SELECT active FROM professionals WHERE id=?", Boolean.class, professionalId);
+        if (professionalActive.isEmpty()) throw new NotFoundException("Professional not found");
+        // HU-011 CA-03: un profesional inactivo no puede reservarse.
+        if (!professionalActive.getFirst()) throw new BusinessRuleException("PROFESSIONAL_INACTIVE", "The professional is not active");
         long locationId = locationId(locationCode);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_specialties WHERE professional_id=? AND specialty_id=? AND active=TRUE", Integer.class, professionalId, sid) == 0)
             throw new BusinessException("SPECIALTY_NOT_ASSIGNED", "The professional does not provide this specialty");
         if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_locations WHERE professional_id=? AND location_id=? AND active=TRUE", Integer.class, professionalId, locationId) == 0)
             throw new BusinessException("LOCATION_NOT_ASSIGNED", "The professional is not enabled at this location");
         LocalDateTime endAt = startAt.plusMinutes(duration);
-        List<Map<String,Object>> slots = jdbc.queryForList("SELECT ps.id,ps.start_at startAt FROM professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id WHERE b.professional_id=? AND b.location_id=? AND ps.start_at>=? AND ps.end_at<=? AND ps.appointment_id IS NULL AND ps.reschedule_request_id IS NULL ORDER BY ps.start_at FOR UPDATE", professionalId, locationId, Timestamp.valueOf(startAt), Timestamp.valueOf(endAt));
+        List<Map<String,Object>> slots = jdbc.queryForList("SELECT ps.id,ps.start_at startAt FROM professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id WHERE b.professional_id=? AND b.location_id=? AND b.active=TRUE AND ps.start_at>=? AND ps.end_at<=? AND ps.appointment_id IS NULL AND ps.reschedule_request_id IS NULL ORDER BY ps.start_at FOR UPDATE", professionalId, locationId, Timestamp.valueOf(startAt), Timestamp.valueOf(endAt));
         ensureConsecutive(slots, startAt, duration);
         String status = general ? "APPROVED" : "REQUESTED";
         long statusId = statusId("appointment_statuses", status);

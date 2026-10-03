@@ -25,13 +25,9 @@ public class SchedulingController {
 
     public SchedulingController(SchedulingService service) { this.service = service; }
 
-    @GetMapping("/admin/locations") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> locations() { return service.locations(); }
 
 
 
-    @PutMapping("/admin/professionals/{id}/capabilities") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> configureProfessional(@PathVariable long id,@Valid @RequestBody CapabilitiesRequest r){return service.configureProfessional(id,r.specialtyIds(),r.primarySpecialtyId(),r.locationIds(),r.active());}
 
     @PostMapping("/professional/blocks") @PreAuthorize("hasRole('PROFESSIONAL')")
     Map<String,Object> createBlock(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BlockRequest r){return service.createBlock(userId(jwt),r.date(),r.startTime(),r.endTime(),r.locationCode());}
@@ -70,7 +66,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record CapabilitiesRequest(@NotNull List<Long> specialtyIds,Long primarySpecialtyId,@NotNull List<Long> locationIds,boolean active){}
     record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}
     record BookingRequest(Long specialtyId,@NotNull Long professionalId,@NotBlank String locationCode,@NotBlank String startAt,String reason){}
     record RescheduleRequest(@NotBlank String startAt,@NotBlank String locationCode){}
