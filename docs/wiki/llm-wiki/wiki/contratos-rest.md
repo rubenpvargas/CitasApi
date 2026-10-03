@@ -323,3 +323,45 @@ Precisiones respecto al plan (HECHO, a validar en el cierre de la ola):
 - PREGUNTA ABIERTA: `GET /catalogs` no expone `id` de regímenes que
   `POST /admin/eps/{id}/plans` requiere (`regimeId`); resolver en Ola C
   (añadir `id` o aceptar `regimeCode`).
+
+## PLAN CROSS-REPO — Ola G: automatizaciones S5/S6 (WF-001, WF-002) — 2026-10-03
+
+Auditoría: WF-001 usaba un JWT ADMIN de 15 minutos (no operable) contra una
+ruta no documentada; el backend nunca invoca el webhook de WF-002 y éste no
+autentica al emisor.
+
+**DECISIÓN — credencial de automatización (mínimo privilegio).**
+- `GET /api/v1/automation/appointments/reminders?hours=24` (`1 ≤ hours ≤ 72`)
+  autenticado solo con cabecera `X-Automation-Key`, comparada en tiempo
+  constante contra el hash de `AUTOMATION_API_KEY` (entorno). Sin variable
+  configurada la ruta responde `401`. La clave concede únicamente el rol
+  `AUTOMATION` y no sirve en ninguna otra ruta (`403`).
+- Respuesta mínima: `[{appointmentId, startAt, endAt, locationName,
+  specialtyName, professionalName, recipient:{firstName, email}}]` solo de
+  citas `APPROVED` que empiezan dentro de la ventana. Sin documento, teléfono,
+  tokens ni ids de usuario. Se retira `GET /admin/automation/...`.
+
+**DECISIÓN — eventos de estado con outbox transaccional (WF-002).**
+- En la misma transacción de la transición se inserta una fila en
+  `notification_outbox(id, event_id UUID, correlation_id, event_type,
+  appointment_id, payload JSON, status PENDING|SENT|FAILED, attempts,
+  next_attempt_at, last_error_code, created_at, sent_at)`; si la transición
+  hace rollback, no hay evento.
+- Un despachador programado envía `POST` a `N8N_STATUS_WEBHOOK_URL` (vacío =
+  desactivado; las filas quedan `PENDING`) con cabecera `X-Webhook-Secret`
+  (`N8N_WEBHOOK_SECRET`), timeout 3 s, hasta 3 intentos con backoff
+  exponencial, luego `FAILED`. Un fallo de n8n nunca invalida la cita.
+- Eventos: `APPOINTMENT_APPROVED`, `APPOINTMENT_REJECTED`,
+  `APPOINTMENT_CANCELLED`, `RESCHEDULE_APPROVED`, `RESCHEDULE_REJECTED`.
+  Payload `{eventId, correlationId, type, occurredAt, appointmentId, status,
+  startAt, recipient:{firstName, email}, reason?}`. Nunca JWT, password ni
+  documento.
+- **n8n:** WF-002 valida `X-Webhook-Secret` (nodo IF) antes de Gmail y
+  responde `401` si no coincide; WF-001 usa credencial *Header Auth*
+  `X-Automation-Key`. Los JSON exportados no contienen credenciales.
+
+**Evidencia esperada.** IT: clave ausente/errónea → 401, clave válida en otra
+ruta → 403, ventana y campos mínimos; outbox: fila creada solo con commit,
+despacho a un servidor HTTP de prueba con cabecera, reintentos y `FAILED`, y
+transición exitosa aunque el webhook falle. Validación estructural de los JSON
+(nodos, conexiones, ausencia de secretos).
