@@ -32,6 +32,7 @@ class FixedCatalogsIT extends AbstractMySqlIT {
                 .andExpect(jsonPath("$.appointmentStatuses[0].terminal").isBoolean())
                 .andExpect(jsonPath("$.rescheduleRequestStatuses", not(empty())))
                 .andExpect(jsonPath("$.insuranceRegimes", not(empty())))
+                .andExpect(jsonPath("$.insuranceRegimes[0].id").isNumber())
                 .andExpect(jsonPath("$.locations[*].code", hasItems("HIC", "ICV")));
     }
 

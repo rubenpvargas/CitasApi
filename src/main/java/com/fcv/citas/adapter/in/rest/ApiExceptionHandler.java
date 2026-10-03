@@ -9,6 +9,7 @@ import com.fcv.citas.application.exception.InvalidPasswordException;
 import com.fcv.citas.application.exception.InvalidRefreshTokenException;
 import com.fcv.citas.application.exception.NotFoundException;
 import com.fcv.citas.application.exception.RequestValidationException;
+import com.fcv.citas.domain.model.DomainRuleViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -54,6 +55,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     ResponseEntity<Object> unauthenticated() {
         return problem(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication is required");
+    }
+
+    @ExceptionHandler(DomainRuleViolation.class)
+    ResponseEntity<Object> domainRule(DomainRuleViolation exception) {
+        return problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
     }
 
     @ExceptionHandler(BusinessRuleException.class)

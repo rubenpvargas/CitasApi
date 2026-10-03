@@ -23,10 +23,10 @@ relacionadas: ["[[HU-013-modificar-bloques-futuros]]", "[[HU-015-consultar-dispo
 ## Esfuerzo
 **Nivel:** Alto. **Justificación:** validación temporal, ownership, sede y representación de slots.
 ## Tareas de desarrollo
-- [ ] **T-01 — Diseñar bloque/slot e índices de agenda**. Dificultad: Alto.
-- [ ] **T-02 — Implementar validaciones de fecha, solape, sede y ownership**. Dificultad: Alto.
-- [ ] **T-03 — Crear calendario/formulario accesible**. Dificultad: Medio.
-- [ ] **T-04 — Probar pasado, solape, sede no asignada y varios bloques**. Dificultad: Alto.
+- [x] **T-01 — Diseñar bloque/slot e índices de agenda**. Dificultad: Alto.
+- [x] **T-02 — Implementar validaciones de fecha, solape, sede y ownership**. Dificultad: Alto.
+- [x] **T-03 — Crear calendario/formulario accesible**. Dificultad: Medio.
+- [x] **T-04 — Probar pasado, solape, sede no asignada y varios bloques**. Dificultad: Alto.
 ## Criterios de aceptación
 ### CA-01 — Bloque válido
 **Dado** PROFESSIONAL activo y sede asignada **cuando** crea un bloque futuro no solapado **entonces** queda publicado y discretizado en slots de 30 min.
@@ -35,14 +35,21 @@ relacionadas: ["[[HU-013-modificar-bloques-futuros]]", "[[HU-015-consultar-dispo
 ### CA-03 — Ownership
 **Dado** otro profesional **cuando** intenta crear bloque ajeno **entonces** el backend lo deniega.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados incluyendo bordes temporales.
-- [ ] Migración Flyway, índices y modelo 3FN soportan consultas de agenda.
-- [ ] UI muestra estados loading/error/success y no permite asumir disponibilidad final.
+- [x] CA-01 a CA-03 validados incluyendo bordes temporales.
+- [x] Migración Flyway, índices y modelo 3FN soportan consultas de agenda.
+- [x] UI muestra estados loading/error/success y no permite asumir disponibilidad final.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `AvailabilityBlockIT` (6): bloque futuro publicado y discretizado; 08:00 Bogotá se guarda y lee como 08:00 | API `0d2727b`; corrige desfase de 5 h de `Timestamp.valueOf` |
+| CA-02 | Conforme | `BlockValidatorTest`, `BlockScheduleTest` (RED 9/12 → GREEN): pasado → `PAST_BLOCK`, solape en cualquier sede → `BLOCK_OVERLAP`, sede no asignada → `LOCATION_NOT_ASSIGNED`, desalineado → 400 | Ver PRUEBAS_DE_ESCRITORIO.md |
+| CA-03 | Conforme | Profesional derivado del JWT; `professionalId` del cuerpo ignorado; rol distinto → 403 | Bloqueo de la fila del profesional |
+| DoD índices | Conforme | `ix_blocks_professional_date`, `uk_slot_block_start`, `ix_slot_start` (V4) soportan agenda | — |
+| DoD UI / E2E | Conforme | Web `06edca8`; E2E Playwright UI+API real: "publica un bloque mañana en HIC" en verde | — |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
+- 2026-10-03 — Corregida (solape entre sedes, desfase horario) y validada con E2E real (API `0d2727b`; web `06edca8`).
+
 ## Notas y decisiones
 - Zona horaria/formato se acordará en contrato.

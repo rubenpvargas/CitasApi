@@ -13,6 +13,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -104,12 +105,105 @@ public abstract class AbstractMySqlIT {
         return bearer(login(email, STRONG_PASSWORD).get("accessToken").asText());
     }
 
+    /** Usuario con exactamente los roles indicados (se retira el rol USER del registro). */
+    protected String tokenOnlyRoles(String... roles) throws Exception {
+        String email = registerUser();
+        jdbc.update("DELETE ur FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.email = ?", email);
+        for (String role : roles) {
+            jdbc.update("INSERT INTO user_roles(user_id, role_id) SELECT u.id, r.id FROM users u, roles r "
+                    + "WHERE u.email = ? AND r.code = ?", email, role);
+        }
+        return bearer(login(email, STRONG_PASSWORD).get("accessToken").asText());
+    }
+
+    /** Reserva general vía API como un USER nuevo; devuelve el cuerpo AppointmentDto. */
+    protected JsonNode bookGeneral(String userToken, long professionalId, String locationCode, java.time.LocalDateTime startAt)
+            throws Exception {
+        return body(mvc.perform(post("/api/v1/appointments/general").header("Authorization", userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("professionalId", professionalId, "locationCode", locationCode,
+                                "startAt", startAt.toString().length() == 16 ? startAt + ":00" : startAt.toString(),
+                                "reason", "Control sintetico"))))
+                .andExpect(status().isCreated()).andReturn());
+    }
+
+    /** Publica un bloque como el profesional indicado y devuelve su id. */
+    protected long publishBlock(String professionalToken, java.time.LocalDate date, String start, String end,
+                                String locationCode) throws Exception {
+        return body(mvc.perform(post("/api/v1/professional/blocks").header("Authorization", professionalToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("date", date.toString(), "startTime", start, "endTime", end,
+                                "locationCode", locationCode))))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+    }
+
+    /**
+     * Fixture SQL sintético: una cita APPROVED del profesional demo 9001 y una reprogramación PENDING
+     * real (respeta fk_slot_reschedule_request) para simular retenciones en pruebas de agenda.
+     */
+    protected long syntheticPendingRescheduleId() throws Exception {
+        String email = registerUser();
+        long userId = jdbc.queryForObject("SELECT id FROM users WHERE email = ?", Long.class, email);
+        java.time.LocalDateTime start = agendaToday().plusDays(60).atTime(7, 0);
+        jdbc.update("INSERT INTO appointments(patient_user_id, professional_id, location_id, specialty_id, status_id, "
+                + "scheduled_start_at, scheduled_end_at, created_by_user_id, created_at, updated_at) "
+                + "SELECT ?, 9001, l.id, s.id, st.id, ?, ?, ?, NOW(6), NOW(6) FROM locations l, specialties s, "
+                + "appointment_statuses st WHERE l.code = 'HIC' AND s.code = 'MEDICINA_GENERAL' AND st.code = 'APPROVED'",
+                userId, start, start.plusMinutes(30), userId);
+        long appointmentId = jdbc.queryForObject("SELECT MAX(id) FROM appointments WHERE patient_user_id = ?", Long.class, userId);
+        jdbc.update("INSERT INTO reschedule_requests(appointment_id, requested_by_user_id, requested_location_id, status_id, "
+                + "previous_start_at, previous_end_at, requested_start_at, requested_end_at, created_at) "
+                + "SELECT ?, ?, l.id, rs.id, ?, ?, ?, ?, NOW(6) FROM locations l, reschedule_request_statuses rs "
+                + "WHERE l.code = 'HIC' AND rs.code = 'PENDING'",
+                appointmentId, userId, start, start.plusMinutes(30), start.plusDays(1), start.plusDays(1).plusMinutes(30));
+        return jdbc.queryForObject("SELECT MAX(id) FROM reschedule_requests WHERE appointment_id = ?", Long.class, appointmentId);
+    }
+
     protected String userToken() throws Exception {
         return tokenWithRoles();
     }
 
     protected String adminToken() throws Exception {
         return tokenWithRoles("ADMIN");
+    }
+
+    /** Profesional sintético creado por la API de ADMIN, con capacidades asignadas y su access token. */
+    protected record ProfessionalFixture(long id, String token, String email) {
+    }
+
+    protected ProfessionalFixture activeProfessional(List<String> specialtyCodes, List<String> locationCodes) throws Exception {
+        String admin = adminToken();
+        String suffix = unique();
+        String email = "agenda." + suffix + "@example.test";
+        Map<String, Object> create = new java.util.HashMap<>();
+        create.put("firstName", "Valeria");
+        create.put("lastName", "Agenda");
+        create.put("documentType", "CC");
+        create.put("documentNumber", "AG" + suffix);
+        create.put("email", email);
+        create.put("phone", "3000000000");
+        create.put("password", STRONG_PASSWORD);
+        create.put("professionalCode", "AG-" + suffix);
+        create.put("licenseNumber", "RM-AG-" + suffix);
+        long id = body(mvc.perform(post("/api/v1/admin/professionals").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content(toJson(create)))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        List<Long> specialtyIds = specialtyCodes.stream()
+                .map(code -> jdbc.queryForObject("SELECT id FROM specialties WHERE code = ?", Long.class, code)).toList();
+        List<Long> locationIds = locationCodes.stream()
+                .map(code -> jdbc.queryForObject("SELECT id FROM locations WHERE code = ?", Long.class, code)).toList();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/admin/professionals/" + id + "/capabilities").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("specialtyIds", specialtyIds, "primarySpecialtyId", specialtyIds.getFirst(),
+                                "locationIds", locationIds, "active", true))))
+                .andExpect(status().isOk());
+        return new ProfessionalFixture(id, bearer(login(email, STRONG_PASSWORD).get("accessToken").asText()), email);
+    }
+
+    /** Hoy en la zona de la agenda (America/Bogota), la misma que usa el Clock de la aplicación. */
+    protected static java.time.LocalDate agendaToday() {
+        return java.time.LocalDate.now(java.time.ZoneId.of("America/Bogota"));
     }
 
     protected JsonNode body(MvcResult result) throws Exception {

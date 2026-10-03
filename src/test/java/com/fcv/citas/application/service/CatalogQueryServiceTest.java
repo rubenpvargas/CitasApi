@@ -18,7 +18,7 @@ class CatalogQueryServiceTest {
                 List.of(new CatalogEntry("USER", "Usuario"), new CatalogEntry("ADMIN", "Administrador")),
                 List.of(new CatalogStatus("APPROVED", "Aprobada", false)),
                 List.of(new CatalogStatus("PENDING", "Pendiente", false)),
-                List.of(new CatalogEntry("CONTRIBUTIVO", "Contributivo")),
+                List.of(new com.fcv.citas.domain.model.InsuranceRegime(1L, "CONTRIBUTIVO", "Contributivo")),
                 List.of(new CatalogLocation("HIC", "Hospital Internacional de Colombia (HIC)",
                         "Direccion publica", "Piedecuesta", "Santander", true)));
         CatalogRepositoryPort repository = () -> expected;

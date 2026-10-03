@@ -25,8 +25,8 @@ public class CatalogPersistenceAdapter implements CatalogRepositoryPort {
                         new CatalogStatus(rs.getString("code"), rs.getString("name"), rs.getBoolean("is_terminal"))),
                 jdbc.query("SELECT code, name, is_terminal FROM reschedule_request_statuses ORDER BY id", (rs, rowNum) ->
                         new CatalogStatus(rs.getString("code"), rs.getString("name"), rs.getBoolean("is_terminal"))),
-                jdbc.query("SELECT code, name FROM insurance_regimes ORDER BY id", (rs, rowNum) ->
-                        new CatalogEntry(rs.getString("code"), rs.getString("name"))),
+                jdbc.query("SELECT id, code, name FROM insurance_regimes ORDER BY id", (rs, rowNum) ->
+                        new com.fcv.citas.domain.model.InsuranceRegime(rs.getLong("id"), rs.getString("code"), rs.getString("name"))),
                 jdbc.query("SELECT code, name, address, city, department, active FROM locations ORDER BY id", (rs, rowNum) ->
                         new CatalogLocation(rs.getString("code"), rs.getString("name"), rs.getString("address"),
                                 rs.getString("city"), rs.getString("department"), rs.getBoolean("active")))

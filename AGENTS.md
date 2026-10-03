@@ -2,7 +2,7 @@
 
 ## Estado verificado del repositorio
 
-Verificado el 2026-10-02 (Ola A, HU-001 a HU-004 y HU-007):
+Verificado el 2026-10-03 (olas A, B y C: HU-001 a HU-015):
 
 - Proyecto Spring Boot 3.5.16 / Java 21 / Maven (`pom.xml`, paquete raíz
   `com.fcv.citas`): `domain`, `application` (casos de uso, puertos `in`/`out`,
@@ -20,10 +20,19 @@ Verificado el 2026-10-02 (Ola A, HU-001 a HU-004 y HU-007):
     MySQL 8.4 real. Requiere `IT_DB_URL`, `IT_DB_USER`, `IT_DB_PASSWORD` por
     entorno; la base indicada se limpia y migra desde vacío (solo bases
     desechables). Base común: `src/test/java/com/fcv/citas/it/AbstractMySqlIT`.
-- Deuda conocida: `SchedulingService` (perfil, oferta ADMIN, agenda, citas,
-  reprogramación) usa `JdbcTemplate`/SQL y anotaciones Spring en la capa de
-  aplicación y `BusinessException` genérica; debe refactorizarse a puertos y
-  adaptadores en olas posteriores. La identidad ya sigue el estilo hexagonal.
+- Tiempo: `Clock` inyectable con zona `app.time-zone` (por defecto
+  `America/Bogota`); la agenda se persiste como hora local de pared enlazando
+  `LocalDate`/`LocalTime`/`LocalDateTime` (nunca `Timestamp.valueOf`).
+- Hexagonal: identidad, perfil, EPS/planes, especialidades, afiliación,
+  profesionales, bloques, calendario y disponibilidad tienen casos de uso en
+  `application/service`, puertos `out` y adaptadores JDBC en
+  `adapter/out/persistence`; reglas puras en `domain/model` (`BlockValidator`,
+  `BlockSchedule`, `AvailabilityCalculator`, `DateRange`).
+- Deuda conocida: `SchedulingService`/`SchedulingController` conservan las
+  olas D–F (reserva, mis citas, cancelación, decisiones ADMIN,
+  reprogramación, agenda y cierre profesional, inbox y recordatorios) con
+  `JdbcTemplate`, `Map<String,Object>` y `BusinessException`; se refactorizan
+  en esas olas.
 ## Alcance de este repositorio
 
 Implementar únicamente el backend del sistema de citas: Java 21, Spring Boot

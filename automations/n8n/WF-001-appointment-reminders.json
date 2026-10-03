@@ -17,12 +17,15 @@
       "name": "Every hour",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "={{($env.CITAS_API_URL || 'http://citas-api:8080') + '/api/v1/admin/automation/appointments/reminders'}}",
+        "url": "={{($env.CITAS_API_URL || 'http://citas-api:8080') + '/api/v1/automation/appointments/reminders'}}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
@@ -31,6 +34,10 @@
             {
               "name": "hours",
               "value": "24"
+            },
+            {
+              "name": "windowMinutes",
+              "value": "60"
             }
           ]
         },
@@ -42,53 +49,128 @@
       "name": "Get upcoming approved appointments",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "credentials": {
         "httpHeaderAuth": {
           "id": "",
-          "name": "Citas API ADMIN JWT (configure in n8n)"
+          "name": "Citas API automation key (header X-Automation-Key, configure in n8n)"
         }
       },
-      "position": [500, 300]
+      "position": [
+        500,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "return items.filter(item => item.json.status === 'APPROVED').map(item => ({ json: { ...item.json, reminderWindow: '24h', workflow: 'WF-001' } }));"
+        "jsCode": "// La API ya devuelve solo citas APPROVED de la ventana; se valida el contrato mínimo\n// y se descartan elementos sin destinatario para no enviar correos incompletos.\nconst valid = [];\nfor (const item of items) {\n  const a = item.json;\n  if (!a || !a.appointmentId || !a.startAt || !a.recipient || !a.recipient.email) continue;\n  valid.push({ json: {\n    appointmentId: a.appointmentId,\n    startAt: a.startAt,\n    locationName: a.locationName,\n    specialtyName: a.specialtyName,\n    professionalName: a.professionalName,\n    firstName: a.recipient.firstName,\n    email: a.recipient.email,\n    workflow: 'WF-001'\n  } });\n}\nreturn valid;"
       },
-      "id": "wf001-filter",
-      "name": "Keep approved appointments",
+      "id": "wf001-validate",
+      "name": "Validate minimal payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [760, 300]
+      "position": [
+        760,
+        300
+      ]
     },
     {
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "={{$json.patientEmail}}",
-        "subject": "Recordatorio de cita - FCV Demo",
-        "message": "={{'Recordatorio: tienes una cita aprobada el ' + $json.startAt + '. Este mensaje pertenece al entorno sintético de FCV.'}}"
+        "sendTo": "={{$json.email}}",
+        "subject": "Recordatorio de cita - FCV Demo (sintético)",
+        "emailType": "text",
+        "message": "={{'Hola ' + $json.firstName + ', te recordamos tu cita de ' + $json.specialtyName + ' con ' + $json.professionalName + ' en ' + $json.locationName + ' el ' + $json.startAt.replace('T', ' a las ') + '. Este mensaje pertenece al entorno sintético de laboratorio.'}}",
+        "options": {}
       },
       "id": "wf001-gmail",
       "name": "Send synthetic reminder",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [1020, 300]
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail OAuth2 (configure in n8n)"
+        }
+      },
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Registro de ejecución sin datos personales: solo id de cita y resultado.\nreturn items.map(item => ({ json: {\n  workflow: 'WF-001',\n  appointmentId: $('Validate minimal payload').itemMatching(item.pairedItem?.item ?? 0)?.json.appointmentId ?? null,\n  sent: !item.json.error,\n  at: new Date().toISOString()\n} }));"
+      },
+      "id": "wf001-log",
+      "name": "Execution record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        300
+      ]
     }
   ],
   "connections": {
     "Every hour": {
-      "main": [[{ "node": "Get upcoming approved appointments", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get upcoming approved appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get upcoming approved appointments": {
-      "main": [[{ "node": "Keep approved appointments", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validate minimal payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Keep approved appointments": {
-      "main": [[{ "node": "Send synthetic reminder", "type": "main", "index": 0 }]]
+    "Validate minimal payload": {
+      "main": [
+        [
+          {
+            "node": "Send synthetic reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send synthetic reminder": {
+      "main": [
+        [
+          {
+            "node": "Execution record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": {},
-  "versionId": "wf001-s2-s6",
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "versionId": "wf001-s5-v2",
   "meta": {
     "templateCredsSetupCompleted": false
   },
