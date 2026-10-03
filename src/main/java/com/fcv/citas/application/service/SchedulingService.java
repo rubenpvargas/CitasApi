@@ -53,26 +53,6 @@ public class SchedulingService {
         return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
     }
 
-    public List<Map<String, Object>> specialties() {
-        return jdbc.queryForList("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general, "
-                + "requires_admin_approval requiresAdminApproval,active FROM specialties ORDER BY name");
-    }
-
-    @Transactional
-    public Map<String, Object> createSpecialty(String code, String name, int durationMinutes, boolean general) {
-        checkDuration(durationMinutes);
-        jdbc.update("INSERT INTO specialties(code,name,appointment_duration_minutes,is_general,requires_admin_approval,active) "
-                + "VALUES(?,?,?, ?, ?, TRUE)", code, name, durationMinutes, general, !general);
-        return one("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general,active FROM specialties WHERE code=?", code);
-    }
-
-    @Transactional
-    public Map<String, Object> updateSpecialty(long id, String name, int durationMinutes, boolean active) {
-        checkDuration(durationMinutes);
-        jdbc.update("UPDATE specialties SET name=?, appointment_duration_minutes=?, active=? WHERE id=?", name, durationMinutes, active, id);
-        return one("SELECT id,code,name,appointment_duration_minutes durationMinutes,is_general general,active FROM specialties WHERE id=?", id);
-    }
-
     public List<Map<String, Object>> professionals() {
         return jdbc.queryForList("SELECT p.id,p.professional_code professionalCode,p.license_number licenseNumber,p.active, "
                 + "u.id userId,u.first_name firstName,u.last_name lastName,u.email,u.phone, "
@@ -248,6 +228,5 @@ public class SchedulingService {
     private long professionalId(long userId){List<Map<String,Object>>rows=jdbc.queryForList("SELECT id FROM professionals WHERE user_id=? AND active=TRUE",userId);if(rows.isEmpty())throw new BusinessException("PROFESSIONAL_REQUIRED","An active professional profile is required");return ((Number)rows.get(0).get("id")).longValue();}
     private long locationId(String code){return ((Number)one("SELECT id FROM locations WHERE code=? AND active=TRUE",code).get("id")).longValue();}
     private long statusId(String table,String code){return ((Number)one("SELECT id FROM "+table+" WHERE code=?",code).get("id")).longValue();}
-    private void checkDuration(int duration){if(duration!=30&&duration!=60)throw new BusinessException("INVALID_DURATION","Duration must be 30 or 60 minutes");}
     private Map<String,Object> one(String sql,Object...args){List<Map<String,Object>>rows=jdbc.queryForList(sql,args);if(rows.isEmpty())throw new BusinessException("NOT_FOUND","Requested resource was not found");return new HashMap<>(rows.get(0));}
 }

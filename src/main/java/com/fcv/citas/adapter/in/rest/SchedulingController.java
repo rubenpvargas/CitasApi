@@ -37,12 +37,6 @@ public class SchedulingController {
     List<Map<String,Object>> locations() { return service.locations(); }
 
 
-    @GetMapping("/admin/specialties")
-    List<Map<String,Object>> specialties(){return service.specialties();}
-    @PostMapping("/admin/specialties") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createSpecialty(@Valid @RequestBody SpecialtyRequest r){return service.createSpecialty(r.code(),r.name(),r.durationMinutes(),r.general());}
-    @PatchMapping("/admin/specialties/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updateSpecialty(@PathVariable long id,@Valid @RequestBody SpecialtyUpdateRequest r){return service.updateSpecialty(id,r.name(),r.durationMinutes(),r.active());}
 
     @GetMapping("/admin/professionals") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> professionals(){return service.professionals();}
@@ -89,8 +83,6 @@ public class SchedulingController {
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
     record AffiliationRequest(@NotNull Long planId,@NotBlank @Size(max=80) String membershipNumber){}
-    record SpecialtyRequest(@NotBlank String code,@NotBlank String name,@NotNull Integer durationMinutes,boolean general){}
-    record SpecialtyUpdateRequest(@NotBlank String name,@NotNull Integer durationMinutes,boolean active){}
     record ProfessionalRequest(@NotBlank String firstName,@NotBlank String lastName,@NotBlank String documentType,@NotBlank String documentNumber,@Email @NotBlank String email,@NotBlank String phone,@NotBlank @Size(min=8,max=72) String password,@NotBlank String professionalCode,@NotBlank String licenseNumber){}
     record CapabilitiesRequest(@NotNull List<Long> specialtyIds,Long primarySpecialtyId,@NotNull List<Long> locationIds,boolean active){}
     record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}
