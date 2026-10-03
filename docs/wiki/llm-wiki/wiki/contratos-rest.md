@@ -365,3 +365,13 @@ ruta → 403, ventana y campos mínimos; outbox: fila creada solo con commit,
 despacho a un servidor HTTP de prueba con cabecera, reintentos y `FAILED`, y
 transición exitosa aunque el webhook falle. Validación estructural de los JSON
 (nodos, conexiones, ausencia de secretos).
+
+## PRECISIÓN — HU-025/HU-022 bandeja (2026-10-03, aditivo)
+
+Los ítems `reschedules` de `GET /admin/inbox` incluyen `currentStartAt`,
+`currentEndAt` (franja vigente de la cita) y `requestedStartAt`,
+`requestedEndAt` (franja retenida) además de `id`, `appointmentId`,
+`patientName`, `professionalName`, `specialtyName`, `locationCode` y
+`createdAt`, para que ADMIN compare antes de decidir. Los ítems
+`appointments` incluyen `id`, `patientName`, `professionalName`,
+`specialtyName`, `locationCode`, `startAt`, `endAt`, `createdAt`.
