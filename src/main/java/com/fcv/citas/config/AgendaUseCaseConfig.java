@@ -5,6 +5,7 @@ import com.fcv.citas.application.port.in.AppointmentDecisionUseCase;
 import com.fcv.citas.application.port.in.AvailabilityBlockUseCase;
 import com.fcv.citas.application.port.in.AvailabilityQueryUseCase;
 import com.fcv.citas.application.port.in.BookingUseCase;
+import com.fcv.citas.application.port.in.MyAppointmentsUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
@@ -25,6 +26,7 @@ import com.fcv.citas.application.service.AppointmentDecisionService;
 import com.fcv.citas.application.service.AvailabilityBlockService;
 import com.fcv.citas.application.service.AvailabilityQueryService;
 import com.fcv.citas.application.service.BookingService;
+import com.fcv.citas.application.service.MyAppointmentsService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
 import com.fcv.citas.application.service.ProfileService;
@@ -90,5 +92,11 @@ public class AgendaUseCaseConfig {
     AppointmentDecisionUseCase appointmentDecisionUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
                                                           TransactionPort transactions, Clock clock) {
         return new AppointmentDecisionService(appointments, slots, transactions, clock);
+    }
+
+    @Bean
+    MyAppointmentsUseCase myAppointmentsUseCase(AppointmentRepositoryPort appointments, TransactionPort transactions,
+                                                Clock clock) {
+        return new MyAppointmentsService(appointments, transactions, clock);
     }
 }

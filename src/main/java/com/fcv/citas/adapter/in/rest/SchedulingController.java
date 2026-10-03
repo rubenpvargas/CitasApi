@@ -34,8 +34,6 @@ public class SchedulingController {
     @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")
     void close(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody CloseRequest r){service.closeAppointment(userId(jwt),id,r.outcome());}
 
-    @GetMapping("/appointments")
-    List<Map<String,Object>> appointments(@AuthenticationPrincipal Jwt jwt,@RequestParam(required=false) String status,@RequestParam(required=false) LocalDate from,@RequestParam(required=false) LocalDate to){return service.appointments(userId(jwt),status,from,to);}
     @PostMapping("/appointments/{id}/cancel")
     void cancel(@AuthenticationPrincipal Jwt jwt,@PathVariable long id){service.cancel(userId(jwt),id);}
     @PostMapping("/appointments/{id}/reschedule")

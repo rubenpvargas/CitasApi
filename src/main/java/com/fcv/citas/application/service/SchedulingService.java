@@ -31,11 +31,6 @@ public class SchedulingService {
         this.clock = clock;
     }
 
-    public List<Map<String, Object>> appointments(long userId, String status, LocalDate from, LocalDate to) {
-        StringBuilder sql=new StringBuilder("SELECT a.id,a.scheduled_start_at startAt,a.scheduled_end_at endAt,st.code status,a.reason,s.code specialtyCode,s.name specialtyName,s.appointment_duration_minutes durationMinutes,l.code locationCode,l.name locationName,p.id professionalId,u.first_name professionalFirstName,u.last_name professionalLastName FROM appointments a JOIN appointment_statuses st ON st.id=a.status_id JOIN specialties s ON s.id=a.specialty_id JOIN locations l ON l.id=a.location_id JOIN professionals p ON p.id=a.professional_id JOIN users u ON u.id=p.user_id WHERE a.patient_user_id=?"); List<Object> args=new ArrayList<>(List.of(userId));
-        if(status!=null){sql.append(" AND st.code=?");args.add(status);} if(from!=null){sql.append(" AND DATE(a.scheduled_start_at)>=?");args.add(from);} if(to!=null){sql.append(" AND DATE(a.scheduled_start_at)<=?");args.add(to);} sql.append(" ORDER BY a.scheduled_start_at"); return jdbc.queryForList(sql.toString(),args.toArray());
-    }
-
     @Transactional
     public void cancel(long userId,long appointmentId){ Map<String,Object>a=ownedAppointment(userId,appointmentId); String status=(String)a.get("status"); if(!"APPROVED".equals(status)&&!"REQUESTED".equals(status))throw new BusinessException("INVALID_TRANSITION","This appointment cannot be cancelled"); if(!asDateTime(a.get("startAt")).isAfter(LocalDateTime.now(clock)))throw new BusinessException("PAST_APPOINTMENT","Only future appointments can be cancelled"); transitionAppointment(appointmentId,"CANCELLED",userId,"USER","Cancelled by patient"); releaseAppointmentSlots(appointmentId); }
 
