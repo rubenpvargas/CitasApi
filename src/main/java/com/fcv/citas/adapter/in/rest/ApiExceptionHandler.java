@@ -5,6 +5,7 @@ import com.fcv.citas.application.exception.BusinessRuleException;
 import com.fcv.citas.application.exception.DuplicateIdentifierException;
 import com.fcv.citas.application.exception.ForbiddenException;
 import com.fcv.citas.application.exception.InvalidCredentialsException;
+import com.fcv.citas.application.exception.InvalidPasswordException;
 import com.fcv.citas.application.exception.InvalidRefreshTokenException;
 import com.fcv.citas.application.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -67,6 +68,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             case "FORBIDDEN" -> forbidden();
             default -> problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
         };
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    ResponseEntity<Object> invalidPassword(InvalidPasswordException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", exception.getMessage());
     }
 
     @ExceptionHandler(DateTimeParseException.class)

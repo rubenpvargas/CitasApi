@@ -1,63 +1,111 @@
 package com.fcv.citas.application.service;
 
-import com.fcv.citas.application.exception.BusinessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.fcv.citas.application.exception.BusinessRuleException;
+import com.fcv.citas.application.exception.InvalidPasswordException;
+import com.fcv.citas.application.model.PasswordResetRequestResult;
+import com.fcv.citas.application.port.in.PasswordRecoveryUseCase;
+import com.fcv.citas.application.port.out.PasswordHashPort;
+import com.fcv.citas.application.port.out.PasswordResetTokenRepositoryPort;
+import com.fcv.citas.application.port.out.RefreshSessionRevocationPort;
+import com.fcv.citas.application.port.out.ResetTokenGeneratorPort;
+import com.fcv.citas.application.port.out.TokenHashPort;
+import com.fcv.citas.application.port.out.TransactionPort;
+import com.fcv.citas.application.port.out.UserCredentialPort;
+import com.fcv.citas.application.port.out.UserRepositoryPort;
+import com.fcv.citas.domain.model.PasswordPolicy;
+import com.fcv.citas.domain.model.PasswordResetToken;
+import com.fcv.citas.domain.model.User;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.HexFormat;
-import java.util.Map;
+import java.util.Optional;
 
-@Service
-public class PasswordRecoveryService {
-    private final JdbcTemplate jdbc;
-    private final PasswordEncoder passwords;
-    private final SecureRandom random = new SecureRandom();
+/**
+ * HU-004 — recuperación de contraseña no enumerable con token temporal de un solo uso.
+ *
+ * <p>El token en claro nunca se persiste ni se registra: solo su hash. Una solicitud nueva invalida los
+ * tokens previos sin usar; la confirmación bloquea la fila del token, lo consume, fija el nuevo hash
+ * adaptativo y revoca las sesiones de refresh activas del usuario, todo en una transacción.
+ */
+public final class PasswordRecoveryService implements PasswordRecoveryUseCase {
+    static final String INVALID_RESET_TOKEN = "INVALID_RESET_TOKEN";
 
-    public PasswordRecoveryService(JdbcTemplate jdbc, PasswordEncoder passwords) {
-        this.jdbc = jdbc;
-        this.passwords = passwords;
-    }
+    private final UserRepositoryPort users;
+    private final PasswordResetTokenRepositoryPort tokens;
+    private final UserCredentialPort credentials;
+    private final RefreshSessionRevocationPort sessions;
+    private final PasswordHashPort passwords;
+    private final TokenHashPort tokenHashes;
+    private final ResetTokenGeneratorPort generator;
+    private final TransactionPort transactions;
+    private final Clock clock;
+    private final Duration tokenTtl;
+    private final boolean exposeDevelopmentToken;
 
-    @Transactional
-    public String request(String email) {
-        var users = jdbc.queryForList("SELECT id FROM users WHERE email=? AND active=TRUE", email.trim().toLowerCase());
-        if (users.isEmpty()) return null;
-        String token = randomToken();
-        String hash = hash(token);
-        jdbc.update("INSERT INTO password_reset_tokens(user_id,token_hash,expires_at,created_at) VALUES(?,?,DATE_ADD(NOW(6),INTERVAL 30 MINUTE),NOW(6))",
-                users.get(0).get("id"), hash);
-        // Development intentionally returns the one-time token to enable a local
-        // SMTP-free demo. It is never logged and production can suppress it.
-        return token;
-    }
-
-    @Transactional
-    public void reset(String token, String newPassword) {
-        Map<String,Object> row;
-        try {
-            row = jdbc.queryForMap("SELECT id,user_id FROM password_reset_tokens WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW(6)", hash(token));
-        } catch (Exception e) {
-            throw new BusinessException("INVALID_RESET_TOKEN", "The recovery token is invalid or expired");
+    public PasswordRecoveryService(UserRepositoryPort users, PasswordResetTokenRepositoryPort tokens,
+                                   UserCredentialPort credentials, RefreshSessionRevocationPort sessions,
+                                   PasswordHashPort passwords, TokenHashPort tokenHashes,
+                                   ResetTokenGeneratorPort generator, TransactionPort transactions,
+                                   Clock clock, Duration tokenTtl, boolean exposeDevelopmentToken) {
+        if (tokenTtl == null || tokenTtl.isNegative() || tokenTtl.isZero()) {
+            throw new IllegalArgumentException("Password reset token TTL must be positive");
         }
-        jdbc.update("UPDATE users SET password_hash=?,updated_at=NOW(6) WHERE id=?", passwords.encode(newPassword), row.get("user_id"));
-        jdbc.update("UPDATE password_reset_tokens SET used_at=NOW(6) WHERE id=?", row.get("id"));
-        jdbc.update("UPDATE refresh_sessions SET revoked_at=NOW(6) WHERE user_id=? AND revoked_at IS NULL", row.get("user_id"));
+        this.users = users;
+        this.tokens = tokens;
+        this.credentials = credentials;
+        this.sessions = sessions;
+        this.passwords = passwords;
+        this.tokenHashes = tokenHashes;
+        this.generator = generator;
+        this.transactions = transactions;
+        this.clock = clock;
+        this.tokenTtl = tokenTtl;
+        this.exposeDevelopmentToken = exposeDevelopmentToken;
     }
 
-    private String randomToken() {
-        byte[] bytes = new byte[24];
-        random.nextBytes(bytes);
-        return HexFormat.of().formatHex(bytes);
+    @Override
+    public PasswordResetRequestResult requestReset(String email) {
+        String normalized = RegisterUserService.normalizeEmail(email);
+        Optional<String> issued = transactions.required(() -> users.findByEmail(normalized)
+                .filter(User::active)
+                .map(user -> issueFor(user.id())));
+        return issued.filter(token -> exposeDevelopmentToken)
+                .map(PasswordResetRequestResult::withDevelopmentToken)
+                .orElseGet(PasswordResetRequestResult::none);
     }
 
-    private String hash(String value) {
-        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }
-        catch (Exception e) { throw new IllegalStateException(e); }
+    private String issueFor(long userId) {
+        Instant now = clock.instant();
+        tokens.invalidateActiveForUser(userId, now);
+        String rawToken = generator.newToken();
+        tokens.save(new PasswordResetToken(null, userId, tokenHashes.hash(rawToken), now,
+                now.plus(tokenTtl), null, null));
+        return rawToken;
+    }
+
+    @Override
+    public void confirmReset(String token, String newPassword) {
+        if (!PasswordPolicy.isSatisfiedBy(newPassword)) {
+            throw new InvalidPasswordException();
+        }
+        if (token == null || token.isBlank()) {
+            throw invalidToken();
+        }
+        String tokenHash = tokenHashes.hash(token);
+        String newPasswordHash = passwords.hash(newPassword);
+        transactions.required(() -> {
+            Instant now = clock.instant();
+            PasswordResetToken current = tokens.findByTokenHashForUpdate(tokenHash)
+                    .filter(candidate -> candidate.isUsableAt(now))
+                    .orElseThrow(PasswordRecoveryService::invalidToken);
+            tokens.save(current.consume(now));
+            credentials.updatePasswordHash(current.userId(), newPasswordHash, now);
+            sessions.revokeAllForUser(current.userId(), now);
+        });
+    }
+
+    private static BusinessRuleException invalidToken() {
+        return new BusinessRuleException(INVALID_RESET_TOKEN, "The recovery token is invalid or expired");
     }
 }

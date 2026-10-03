@@ -25,6 +25,10 @@ demo son sintéticas (`*@demo.invalid`) y están documentadas en la migración
 `src/main/resources/db/migration/V5__synthetic_demo_seed.sql`; no usarlas fuera
 del laboratorio.
 
+La recuperación de contraseña solo devuelve `developmentToken` si
+`PASSWORD_RESET_EXPOSE_DEV_TOKEN=true` (propiedad
+`app.password-reset.expose-development-token`, por defecto `false`).
+
 Health: `GET /actuator/health`.
 
 ## Verificación
