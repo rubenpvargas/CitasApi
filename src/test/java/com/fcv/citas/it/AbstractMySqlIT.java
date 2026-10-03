@@ -13,6 +13,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,6 +111,45 @@ public abstract class AbstractMySqlIT {
 
     protected String adminToken() throws Exception {
         return tokenWithRoles("ADMIN");
+    }
+
+    /** Profesional sintético creado por la API de ADMIN, con capacidades asignadas y su access token. */
+    protected record ProfessionalFixture(long id, String token, String email) {
+    }
+
+    protected ProfessionalFixture activeProfessional(List<String> specialtyCodes, List<String> locationCodes) throws Exception {
+        String admin = adminToken();
+        String suffix = unique();
+        String email = "agenda." + suffix + "@example.test";
+        Map<String, Object> create = new java.util.HashMap<>();
+        create.put("firstName", "Valeria");
+        create.put("lastName", "Agenda");
+        create.put("documentType", "CC");
+        create.put("documentNumber", "AG" + suffix);
+        create.put("email", email);
+        create.put("phone", "3000000000");
+        create.put("password", STRONG_PASSWORD);
+        create.put("professionalCode", "AG-" + suffix);
+        create.put("licenseNumber", "RM-AG-" + suffix);
+        long id = body(mvc.perform(post("/api/v1/admin/professionals").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content(toJson(create)))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+        List<Long> specialtyIds = specialtyCodes.stream()
+                .map(code -> jdbc.queryForObject("SELECT id FROM specialties WHERE code = ?", Long.class, code)).toList();
+        List<Long> locationIds = locationCodes.stream()
+                .map(code -> jdbc.queryForObject("SELECT id FROM locations WHERE code = ?", Long.class, code)).toList();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/admin/professionals/" + id + "/capabilities").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("specialtyIds", specialtyIds, "primarySpecialtyId", specialtyIds.getFirst(),
+                                "locationIds", locationIds, "active", true))))
+                .andExpect(status().isOk());
+        return new ProfessionalFixture(id, bearer(login(email, STRONG_PASSWORD).get("accessToken").asText()), email);
+    }
+
+    /** Hoy en la zona de la agenda (America/Bogota), la misma que usa el Clock de la aplicación. */
+    protected static java.time.LocalDate agendaToday() {
+        return java.time.LocalDate.now(java.time.ZoneId.of("America/Bogota"));
     }
 
     protected JsonNode body(MvcResult result) throws Exception {

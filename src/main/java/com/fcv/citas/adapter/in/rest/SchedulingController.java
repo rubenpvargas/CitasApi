@@ -29,8 +29,6 @@ public class SchedulingController {
 
 
 
-    @PostMapping("/professional/blocks") @PreAuthorize("hasRole('PROFESSIONAL')")
-    Map<String,Object> createBlock(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BlockRequest r){return service.createBlock(userId(jwt),r.date(),r.startTime(),r.endTime(),r.locationCode());}
     @PatchMapping("/professional/blocks/{id}") @PreAuthorize("hasRole('PROFESSIONAL')")
     Map<String,Object> updateBlock(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody BlockRequest r){return service.updateBlock(userId(jwt),id,r.date(),r.startTime(),r.endTime(),r.locationCode());}
     @DeleteMapping("/professional/blocks/{id}") @PreAuthorize("hasRole('PROFESSIONAL')")
