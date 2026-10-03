@@ -6,6 +6,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "citas-status",
+        "authentication": "headerAuth",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -14,7 +15,23 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [220, 300],
-      "webhookId": "wf002-citas-status"
+      "webhookId": "wf002-citas-status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Citas webhook secret (header X-Webhook-Secret, configure in n8n)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida el evento contra el contrato y prepara el mensaje. No se aceptan campos\n// sensibles: si llegan, se descartan y no se reenvían.\nconst allowed = {\n  APPOINTMENT_APPROVED: ['Cita aprobada', 'Tu solicitud de cita fue aprobada.'],\n  APPOINTMENT_REJECTED: ['Solicitud de cita rechazada', 'Tu solicitud de cita fue rechazada.'],\n  APPOINTMENT_CANCELLED: ['Cita cancelada', 'Tu cita fue cancelada.'],\n  RESCHEDULE_APPROVED: ['Reprogramación aprobada', 'Tu cita fue reprogramada.'],\n  RESCHEDULE_REJECTED: ['Reprogramación rechazada', 'Tu solicitud de reprogramación fue rechazada; tu cita original se mantiene.']\n};\nconst e = items[0].json.body || {};\nconst errors = [];\nfor (const f of ['eventId', 'correlationId', 'type', 'occurredAt', 'appointmentId', 'status', 'startAt']) {\n  if (e[f] === undefined || e[f] === null || e[f] === '') errors.push(f);\n}\nif (!e.recipient || !e.recipient.email) errors.push('recipient.email');\nif (e.type && !allowed[e.type]) errors.push('type');\nif (errors.length) {\n  return [{ json: { valid: false, errors, correlationId: e.correlationId || null } }];\n}\nconst [subject, lead] = allowed[e.type];\nconst when = String(e.startAt).replace('T', ' a las ');\nconst reason = e.reason ? ' Motivo: ' + e.reason + '.' : '';\nreturn [{ json: {\n  valid: true,\n  eventId: e.eventId,\n  correlationId: e.correlationId,\n  type: e.type,\n  appointmentId: e.appointmentId,\n  email: e.recipient.email,\n  subject: subject + ' - FCV Demo (sintético)',\n  message: 'Hola ' + (e.recipient.firstName || '') + '. ' + lead + ' Cita #' + e.appointmentId + ' (' + when + ').' + reason + ' Mensaje del entorno sintético de laboratorio.'\n} }];"
+      },
+      "id": "wf002-validate",
+      "name": "Validate event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
     },
     {
       "parameters": {
@@ -22,69 +39,109 @@
           "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
           "conditions": [
             {
-              "leftValue": "={{$json.eventType}}",
-              "rightValue": "APPOINTMENT_STATUS_CHANGED",
-              "operator": { "type": "string", "operation": "equals" }
-            },
-            {
-              "leftValue": "={{$json.status}}",
-              "rightValue": "APPROVED",
-              "operator": { "type": "string", "operation": "equals" }
+              "leftValue": "={{$json.valid}}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
             }
           ],
           "combinator": "and"
         }
       },
-      "id": "wf002-approved",
-      "name": "Approved event",
+      "id": "wf002-is-valid",
+      "name": "Valid event?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [480, 300]
+      "position": [700, 300]
     },
     {
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "={{$json.recipientEmail}}",
-        "subject": "Cita aprobada - FCV Demo",
-        "message": "={{'Tu cita sintética fue aprobada. Id: ' + $json.appointmentId}}"
+        "sendTo": "={{$json.email}}",
+        "subject": "={{$json.subject}}",
+        "emailType": "text",
+        "message": "={{$json.message}}",
+        "options": {}
       },
-      "id": "wf002-gmail-approved",
-      "name": "Notify approved",
+      "id": "wf002-gmail",
+      "name": "Notify recipient",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [760, 180]
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail OAuth2 (configure in n8n)"
+        }
+      },
+      "position": [960, 180]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { accepted: true, workflow: 'WF-002', correlationId: $json.correlationId || null } }}",
+        "responseBody": "={{ { accepted: true, workflow: 'WF-002', eventId: $('Validate event').item.json.eventId, correlationId: $('Validate event').item.json.correlationId } }}",
         "options": { "responseCode": 202 }
       },
-      "id": "wf002-response",
-      "name": "Deterministic response",
+      "id": "wf002-accepted",
+      "name": "Respond 202 accepted",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1040, 300]
+      "position": [1240, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: false, workflow: 'WF-002', error: 'DELIVERY_FAILED', correlationId: $('Validate event').item.json.correlationId } }}",
+        "options": { "responseCode": 502 }
+      },
+      "id": "wf002-delivery-failed",
+      "name": "Respond 502 delivery failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1240, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: false, workflow: 'WF-002', error: 'INVALID_EVENT', fields: $json.errors, correlationId: $json.correlationId } }}",
+        "options": { "responseCode": 400 }
+      },
+      "id": "wf002-invalid",
+      "name": "Respond 400 invalid event",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 440]
     }
   ],
   "connections": {
     "Appointment status event": {
-      "main": [[{ "node": "Approved event", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Validate event", "type": "main", "index": 0 }]]
     },
-    "Approved event": {
+    "Validate event": {
+      "main": [[{ "node": "Valid event?", "type": "main", "index": 0 }]]
+    },
+    "Valid event?": {
       "main": [
-        [{ "node": "Notify approved", "type": "main", "index": 0 }],
-        [{ "node": "Deterministic response", "type": "main", "index": 0 }]
+        [{ "node": "Notify recipient", "type": "main", "index": 0 }],
+        [{ "node": "Respond 400 invalid event", "type": "main", "index": 0 }]
       ]
     },
-    "Notify approved": {
-      "main": [[{ "node": "Deterministic response", "type": "main", "index": 0 }]]
+    "Notify recipient": {
+      "main": [
+        [{ "node": "Respond 202 accepted", "type": "main", "index": 0 }],
+        [{ "node": "Respond 502 delivery failed", "type": "main", "index": 0 }]
+      ]
     }
   },
   "active": false,
-  "settings": {},
-  "versionId": "wf002-s2-s6",
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "versionId": "wf002-s6-v2",
   "meta": {
     "templateCredsSetupCompleted": false
   },

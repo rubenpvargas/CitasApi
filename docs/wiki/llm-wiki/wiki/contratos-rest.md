@@ -375,3 +375,10 @@ Los ítems `reschedules` de `GET /admin/inbox` incluyen `currentStartAt`,
 `createdAt`, para que ADMIN compare antes de decidir. Los ítems
 `appointments` incluyen `id`, `patientName`, `professionalName`,
 `specialtyName`, `locationCode`, `startAt`, `endAt`, `createdAt`.
+
+## PRECISIÓN — WF-001 sin duplicados (2026-10-03)
+
+`GET /api/v1/automation/appointments/reminders?hours=24&windowMinutes=60`
+devuelve solo citas `APPROVED` con `startAt ∈ [ahora + hours − windowMinutes,
+ahora + hours)` (`1 ≤ hours ≤ 72`, `15 ≤ windowMinutes ≤ 120`, por defecto 60).
+Con disparo horario cada cita aparece en una única ejecución.
