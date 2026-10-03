@@ -31,18 +31,6 @@ public class SchedulingService {
         this.clock = clock;
     }
 
-    public List<Map<String, Object>> availability(String locationCode, Long specialtyId, Long professionalId, LocalDate date) {
-        StringBuilder sql = new StringBuilder("SELECT ps.id,ps.start_at startAt,ps.end_at endAt,p.id professionalId,u.first_name firstName,u.last_name lastName,s.id specialtyId,s.code specialtyCode,s.name specialtyName,s.appointment_duration_minutes durationMinutes,l.code locationCode,l.name locationName ")
-                .append("FROM professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id JOIN professionals p ON p.id=b.professional_id JOIN users u ON u.id=p.user_id JOIN professional_specialties psp ON psp.professional_id=p.id AND psp.active=TRUE JOIN specialties s ON s.id=psp.specialty_id AND s.active=TRUE JOIN locations l ON l.id=b.location_id WHERE ps.appointment_id IS NULL AND ps.reschedule_request_id IS NULL AND b.active=TRUE AND p.active=TRUE AND b.available_date>=CURRENT_DATE");
-        List<Object> args = new ArrayList<>();
-        if (locationCode != null) { sql.append(" AND l.code=?"); args.add(locationCode); }
-        if (specialtyId != null) { sql.append(" AND s.id=?"); args.add(specialtyId); }
-        if (professionalId != null) { sql.append(" AND p.id=?"); args.add(professionalId); }
-        if (date != null) { sql.append(" AND b.available_date=?"); args.add(date); }
-        sql.append(" ORDER BY ps.start_at,p.id");
-        return jdbc.queryForList(sql.toString(), args.toArray());
-    }
-
     @Transactional
     public Map<String, Object> book(long userId, Long specialtyId, long professionalId, String locationCode, LocalDateTime startAt, String reason, boolean general) {
         Map<String, Object> specialty = general

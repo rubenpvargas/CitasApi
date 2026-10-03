@@ -34,8 +34,6 @@ public class SchedulingController {
     @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")
     void close(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody CloseRequest r){service.closeAppointment(userId(jwt),id,r.outcome());}
 
-    @GetMapping("/availability")
-    List<Map<String,Object>> availability(@RequestParam(required=false) String locationCode,@RequestParam(required=false) Long specialtyId,@RequestParam(required=false) Long professionalId,@RequestParam(required=false) LocalDate date){return service.availability(locationCode,specialtyId,professionalId,date);}
     @PostMapping("/appointments/general")
     Map<String,Object> bookGeneral(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BookingRequest r){return service.book(userId(jwt),null,r.professionalId(),r.locationCode(),LocalDateTime.parse(r.startAt()),r.reason(),true);}
     @PostMapping("/appointments/specialized")

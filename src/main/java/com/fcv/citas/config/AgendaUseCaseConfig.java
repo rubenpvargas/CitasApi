@@ -2,12 +2,14 @@ package com.fcv.citas.config;
 
 import com.fcv.citas.application.port.in.AffiliationUseCase;
 import com.fcv.citas.application.port.in.AvailabilityBlockUseCase;
+import com.fcv.citas.application.port.in.AvailabilityQueryUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
 import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
 import com.fcv.citas.application.port.out.AvailabilityBlockRepositoryPort;
+import com.fcv.citas.application.port.out.AvailabilityQueryPort;
 import com.fcv.citas.application.port.out.InsuranceCatalogRepositoryPort;
 import com.fcv.citas.application.port.out.PasswordHashPort;
 import com.fcv.citas.application.port.out.ProfessionalRepositoryPort;
@@ -16,6 +18,7 @@ import com.fcv.citas.application.port.out.SpecialtyRepositoryPort;
 import com.fcv.citas.application.port.out.TransactionPort;
 import com.fcv.citas.application.service.AffiliationService;
 import com.fcv.citas.application.service.AvailabilityBlockService;
+import com.fcv.citas.application.service.AvailabilityQueryService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
 import com.fcv.citas.application.service.ProfileService;
@@ -62,5 +65,11 @@ public class AgendaUseCaseConfig {
                                                       ProfessionalRepositoryPort professionals,
                                                       TransactionPort transactions, Clock clock) {
         return new AvailabilityBlockService(blocks, professionals, transactions, clock);
+    }
+
+    @Bean
+    AvailabilityQueryUseCase availabilityQueryUseCase(AvailabilityQueryPort query, SpecialtyRepositoryPort specialties,
+                                                      Clock clock) {
+        return new AvailabilityQueryService(query, specialties, clock);
     }
 }
