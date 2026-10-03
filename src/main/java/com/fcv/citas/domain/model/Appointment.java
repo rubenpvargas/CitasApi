@@ -48,6 +48,16 @@ public record Appointment(long id, long patientUserId, String patientName, long 
         }
     }
 
+    /** HU-021 — no APPROVED o no futura → INVALID_TRANSITION; con otra PENDING → RESCHEDULE_ALREADY_PENDING. */
+    public void requireReschedulable(LocalDateTime now) {
+        if (status != AppointmentStatus.APPROVED || !startAt.isAfter(now)) {
+            throw invalidTransition("Only approved future appointments can be rescheduled");
+        }
+        if (pendingReschedule != null) {
+            throw new DomainRuleViolation("RESCHEDULE_ALREADY_PENDING", "A reschedule request is already pending");
+        }
+    }
+
     /** HU-021 — solo APPROVED futura y sin otra reprogramación PENDING. */
     public boolean reschedulableAt(LocalDateTime now) {
         return status == AppointmentStatus.APPROVED && startAt.isAfter(now) && pendingReschedule == null;

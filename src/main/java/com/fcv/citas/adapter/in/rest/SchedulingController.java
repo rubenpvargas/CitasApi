@@ -34,8 +34,6 @@ public class SchedulingController {
     @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")
     void close(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody CloseRequest r){service.closeAppointment(userId(jwt),id,r.outcome());}
 
-    @PostMapping("/appointments/{id}/reschedule")
-    Map<String,Object> reschedule(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody RescheduleRequest r){return service.requestReschedule(userId(jwt),id,LocalDateTime.parse(r.startAt()),r.locationCode());}
 
     @GetMapping("/admin/inbox") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> inbox(){return service.adminInbox();}
@@ -46,7 +44,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record RescheduleRequest(@NotBlank String startAt,@NotBlank String locationCode){}
     record DecisionRequest(boolean approve,String reason){}
     record CloseRequest(@NotBlank String outcome){}
 }

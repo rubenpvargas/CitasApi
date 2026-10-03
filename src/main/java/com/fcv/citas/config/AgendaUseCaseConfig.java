@@ -9,6 +9,7 @@ import com.fcv.citas.application.port.in.MyAppointmentsUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
+import com.fcv.citas.application.port.in.RescheduleUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
 import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
 import com.fcv.citas.application.port.out.AvailabilityBlockRepositoryPort;
@@ -31,6 +32,7 @@ import com.fcv.citas.application.service.MyAppointmentsService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
 import com.fcv.citas.application.service.ProfileService;
+import com.fcv.citas.application.service.RescheduleService;
 import com.fcv.citas.application.service.SpecialtyService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -100,5 +102,12 @@ public class AgendaUseCaseConfig {
                                                 RescheduleRepositoryPort reschedules, TransactionPort transactions,
                                                 Clock clock) {
         return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock);
+    }
+
+    @Bean
+    RescheduleUseCase rescheduleUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules,
+                                        SlotRepositoryPort slots, ProfessionalRepositoryPort professionals,
+                                        SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock) {
+        return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock);
     }
 }

@@ -3,6 +3,9 @@ package com.fcv.citas.adapter.in.rest;
 import com.fcv.citas.application.model.BookingCommand;
 import com.fcv.citas.application.port.in.BookingUseCase;
 import com.fcv.citas.application.port.in.MyAppointmentsUseCase;
+import com.fcv.citas.application.port.in.RescheduleUseCase;
+import com.fcv.citas.domain.model.RescheduleRequest;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fcv.citas.domain.model.Appointment;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -33,11 +36,14 @@ import java.util.List;
 public class AppointmentController {
     private final BookingUseCase booking;
     private final MyAppointmentsUseCase mine;
+    private final RescheduleUseCase reschedules;
     private final Clock clock;
 
-    public AppointmentController(BookingUseCase booking, MyAppointmentsUseCase mine, Clock clock) {
+    public AppointmentController(BookingUseCase booking, MyAppointmentsUseCase mine, RescheduleUseCase reschedules,
+                                 Clock clock) {
         this.booking = booking;
         this.mine = mine;
+        this.reschedules = reschedules;
         this.clock = clock;
     }
 
@@ -72,12 +78,33 @@ public class AppointmentController {
         return response(mine.cancel(JwtSubject.userId(jwt), id));
     }
 
+    @PostMapping("/{id}/reschedule")
+    ResponseEntity<RescheduleResponse> reschedule(@AuthenticationPrincipal Jwt jwt, @PathVariable long id,
+                                                  @Valid @RequestBody RescheduleBody body) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(RescheduleResponse.from(
+                reschedules.request(JwtSubject.userId(jwt), id, body.startAt(), body.locationCode())));
+    }
+
     private ResponseEntity<AppointmentResponse> created(Appointment appointment) {
         return ResponseEntity.status(HttpStatus.CREATED).body(response(appointment));
     }
 
     AppointmentResponse response(Appointment appointment) {
         return AppointmentResponse.from(appointment, LocalDateTime.now(clock));
+    }
+
+    /** Profesional y especialidad se conservan: no se aceptan en el cuerpo. */
+    record RescheduleBody(@NotNull LocalDateTime startAt, @NotBlank @Size(max = 30) String locationCode) {
+    }
+
+    record RescheduleResponse(long id, long appointmentId, String status,
+                              @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime requestedStartAt,
+                              @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime requestedEndAt,
+                              String locationCode) {
+        static RescheduleResponse from(RescheduleRequest r) {
+            return new RescheduleResponse(r.id(), r.appointmentId(), r.status().name(), r.requestedStartAt(),
+                    r.requestedEndAt(), r.requestedLocationCode());
+        }
     }
 
     record GeneralBookingRequest(@NotNull Long professionalId, @NotBlank @Size(max = 30) String locationCode,
