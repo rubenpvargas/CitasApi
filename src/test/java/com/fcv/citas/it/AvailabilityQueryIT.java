@@ -51,7 +51,7 @@ class AvailabilityQueryIT extends AbstractMySqlIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(Map.of("professionalId", pro.id(), "locationCode", "HIC",
                                 "startAt", day + "T08:00:00", "reason", "Control sintetico"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         long general = specialtyId("MEDICINA_GENERAL");
 
         assertThat(starts(search(Map.of("specialtyId", general, "from", day, "to", day, "professionalId", pro.id()))))

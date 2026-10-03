@@ -51,7 +51,7 @@ class AvailabilityBlockEditIT extends AbstractMySqlIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(Map.of("professionalId", pro.id(), "locationCode", "HIC",
                                 "startAt", day + "T08:30:00", "reason", "Control sintetico"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         jdbc.update("UPDATE professional_slots SET reschedule_request_id = 999999 WHERE availability_block_id = ? "
                 + "ORDER BY start_at LIMIT 1", held);
 

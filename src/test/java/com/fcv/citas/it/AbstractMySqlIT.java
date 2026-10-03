@@ -105,6 +105,38 @@ public abstract class AbstractMySqlIT {
         return bearer(login(email, STRONG_PASSWORD).get("accessToken").asText());
     }
 
+    /** Usuario con exactamente los roles indicados (se retira el rol USER del registro). */
+    protected String tokenOnlyRoles(String... roles) throws Exception {
+        String email = registerUser();
+        jdbc.update("DELETE ur FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.email = ?", email);
+        for (String role : roles) {
+            jdbc.update("INSERT INTO user_roles(user_id, role_id) SELECT u.id, r.id FROM users u, roles r "
+                    + "WHERE u.email = ? AND r.code = ?", email, role);
+        }
+        return bearer(login(email, STRONG_PASSWORD).get("accessToken").asText());
+    }
+
+    /** Reserva general vía API como un USER nuevo; devuelve el cuerpo AppointmentDto. */
+    protected JsonNode bookGeneral(String userToken, long professionalId, String locationCode, java.time.LocalDateTime startAt)
+            throws Exception {
+        return body(mvc.perform(post("/api/v1/appointments/general").header("Authorization", userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("professionalId", professionalId, "locationCode", locationCode,
+                                "startAt", startAt.toString().length() == 16 ? startAt + ":00" : startAt.toString(),
+                                "reason", "Control sintetico"))))
+                .andExpect(status().isCreated()).andReturn());
+    }
+
+    /** Publica un bloque como el profesional indicado y devuelve su id. */
+    protected long publishBlock(String professionalToken, java.time.LocalDate date, String start, String end,
+                                String locationCode) throws Exception {
+        return body(mvc.perform(post("/api/v1/professional/blocks").header("Authorization", professionalToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("date", date.toString(), "startTime", start, "endTime", end,
+                                "locationCode", locationCode))))
+                .andExpect(status().isCreated()).andReturn()).get("id").asLong();
+    }
+
     protected String userToken() throws Exception {
         return tokenWithRoles();
     }

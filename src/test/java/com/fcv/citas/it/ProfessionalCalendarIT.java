@@ -27,7 +27,7 @@ class ProfessionalCalendarIT extends AbstractMySqlIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(Map.of("professionalId", pro.id(), "locationCode", "ICV",
                                 "startAt", day.plusDays(1) + "T10:00:00", "reason", "Control sintetico"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         JsonNode calendar = body(mvc.perform(get("/api/v1/professional/calendar").header("Authorization", pro.token())
                         .param("from", day.toString()).param("to", day.plusDays(5).toString()))

@@ -31,35 +31,6 @@ public class SchedulingService {
         this.clock = clock;
     }
 
-    @Transactional
-    public Map<String, Object> book(long userId, Long specialtyId, long professionalId, String locationCode, LocalDateTime startAt, String reason, boolean general) {
-        Map<String, Object> specialty = general
-                ? one("SELECT id,appointment_duration_minutes durationMinutes FROM specialties WHERE is_general=TRUE AND active=TRUE")
-                : one("SELECT id,appointment_duration_minutes durationMinutes FROM specialties WHERE id=? AND is_general=FALSE AND active=TRUE", specialtyId);
-        long sid = ((Number) specialty.get("id")).longValue();
-        int duration = ((Number) specialty.get("durationMinutes")).intValue();
-        List<Boolean> professionalActive = jdbc.queryForList("SELECT active FROM professionals WHERE id=?", Boolean.class, professionalId);
-        if (professionalActive.isEmpty()) throw new NotFoundException("Professional not found");
-        // HU-011 CA-03: un profesional inactivo no puede reservarse.
-        if (!professionalActive.getFirst()) throw new BusinessRuleException("PROFESSIONAL_INACTIVE", "The professional is not active");
-        long locationId = locationId(locationCode);
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_specialties WHERE professional_id=? AND specialty_id=? AND active=TRUE", Integer.class, professionalId, sid) == 0)
-            throw new BusinessException("SPECIALTY_NOT_ASSIGNED", "The professional does not provide this specialty");
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_locations WHERE professional_id=? AND location_id=? AND active=TRUE", Integer.class, professionalId, locationId) == 0)
-            throw new BusinessException("LOCATION_NOT_ASSIGNED", "The professional is not enabled at this location");
-        LocalDateTime endAt = startAt.plusMinutes(duration);
-        List<Map<String,Object>> slots = jdbc.queryForList("SELECT ps.id,ps.start_at startAt FROM professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id WHERE b.professional_id=? AND b.location_id=? AND b.active=TRUE AND ps.start_at>=? AND ps.end_at<=? AND ps.appointment_id IS NULL AND ps.reschedule_request_id IS NULL ORDER BY ps.start_at FOR UPDATE", professionalId, locationId, (startAt), (endAt));
-        ensureConsecutive(slots, startAt, duration);
-        String status = general ? "APPROVED" : "REQUESTED";
-        long statusId = statusId("appointment_statuses", status);
-        KeyHolder keys = new GeneratedKeyHolder();
-        jdbc.update(connection -> { PreparedStatement ps=connection.prepareStatement("INSERT INTO appointments(patient_user_id,professional_id,location_id,specialty_id,status_id,reason,scheduled_start_at,scheduled_end_at,created_by_user_id,approved_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,NOW(6),NOW(6))", Statement.RETURN_GENERATED_KEYS); ps.setLong(1,userId);ps.setLong(2,professionalId);ps.setLong(3,locationId);ps.setLong(4,sid);ps.setLong(5,statusId);ps.setString(6,reason);ps.setObject(7,startAt);ps.setObject(8,endAt);ps.setLong(9,userId); if(general) ps.setObject(10,LocalDateTime.now(clock)); else ps.setNull(10,java.sql.Types.TIMESTAMP); return ps; }, keys);
-        long appointmentId=keys.getKey().longValue();
-        jdbc.update("UPDATE professional_slots ps JOIN availability_blocks b ON b.id=ps.availability_block_id SET ps.appointment_id=? WHERE b.professional_id=? AND b.location_id=? AND ps.start_at>=? AND ps.end_at<=?", appointmentId,professionalId,locationId,(startAt),(endAt));
-        jdbc.update("INSERT INTO appointment_status_history(appointment_id,status_id,changed_by_user_id,change_source,reason,changed_at) VALUES(?,?,?,'SYSTEM',?,NOW(6))", appointmentId,statusId,userId,general?"Automatic approval for general medicine":"Specialized request created");
-        return one("SELECT a.id,a.scheduled_start_at startAt,a.scheduled_end_at endAt,st.code status,s.name specialtyName,l.code locationCode,p.id professionalId,u.first_name professionalFirstName,u.last_name professionalLastName FROM appointments a JOIN appointment_statuses st ON st.id=a.status_id JOIN specialties s ON s.id=a.specialty_id JOIN locations l ON l.id=a.location_id JOIN professionals p ON p.id=a.professional_id JOIN users u ON u.id=p.user_id WHERE a.id=?", appointmentId);
-    }
-
     public List<Map<String, Object>> appointments(long userId, String status, LocalDate from, LocalDate to) {
         StringBuilder sql=new StringBuilder("SELECT a.id,a.scheduled_start_at startAt,a.scheduled_end_at endAt,st.code status,a.reason,s.code specialtyCode,s.name specialtyName,s.appointment_duration_minutes durationMinutes,l.code locationCode,l.name locationName,p.id professionalId,u.first_name professionalFirstName,u.last_name professionalLastName FROM appointments a JOIN appointment_statuses st ON st.id=a.status_id JOIN specialties s ON s.id=a.specialty_id JOIN locations l ON l.id=a.location_id JOIN professionals p ON p.id=a.professional_id JOIN users u ON u.id=p.user_id WHERE a.patient_user_id=?"); List<Object> args=new ArrayList<>(List.of(userId));
         if(status!=null){sql.append(" AND st.code=?");args.add(status);} if(from!=null){sql.append(" AND DATE(a.scheduled_start_at)>=?");args.add(from);} if(to!=null){sql.append(" AND DATE(a.scheduled_start_at)<=?");args.add(to);} sql.append(" ORDER BY a.scheduled_start_at"); return jdbc.queryForList(sql.toString(),args.toArray());

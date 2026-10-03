@@ -54,7 +54,7 @@ class AvailabilityBlockIT extends AbstractMySqlIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(toJson(Map.of("professionalId", pro.id(), "locationCode", "HIC",
                                 "startAt", day + "T08:00:00", "reason", "Control sintetico"))))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         assertThat(jdbc.queryForObject("SELECT DATE_FORMAT(a.scheduled_start_at, '%Y-%m-%dT%H:%i') FROM appointments a "
                 + "WHERE a.professional_id = ?", String.class, pro.id())).isEqualTo(day + "T08:00");

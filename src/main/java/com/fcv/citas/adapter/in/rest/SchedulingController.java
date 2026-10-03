@@ -34,10 +34,6 @@ public class SchedulingController {
     @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")
     void close(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody CloseRequest r){service.closeAppointment(userId(jwt),id,r.outcome());}
 
-    @PostMapping("/appointments/general")
-    Map<String,Object> bookGeneral(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BookingRequest r){return service.book(userId(jwt),null,r.professionalId(),r.locationCode(),LocalDateTime.parse(r.startAt()),r.reason(),true);}
-    @PostMapping("/appointments/specialized")
-    Map<String,Object> bookSpecialized(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody BookingRequest r){return service.book(userId(jwt),r.specialtyId(),r.professionalId(),r.locationCode(),LocalDateTime.parse(r.startAt()),r.reason(),false);}
     @GetMapping("/appointments")
     List<Map<String,Object>> appointments(@AuthenticationPrincipal Jwt jwt,@RequestParam(required=false) String status,@RequestParam(required=false) LocalDate from,@RequestParam(required=false) LocalDate to){return service.appointments(userId(jwt),status,from,to);}
     @PostMapping("/appointments/{id}/cancel")
@@ -56,7 +52,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record BookingRequest(Long specialtyId,@NotNull Long professionalId,@NotBlank String locationCode,@NotBlank String startAt,String reason){}
     record RescheduleRequest(@NotBlank String startAt,@NotBlank String locationCode){}
     record DecisionRequest(boolean approve,String reason){}
     record CloseRequest(@NotBlank String outcome){}
