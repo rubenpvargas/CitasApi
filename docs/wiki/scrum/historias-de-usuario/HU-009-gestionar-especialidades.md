@@ -23,10 +23,10 @@ relacionadas: ["[[HU-011-configurar-capacidades-profesional]]", "[[HU-015-consul
 ## Esfuerzo
 **Nivel:** Medio. **Justificación:** catálogo administrativo que gobierna disponibilidad y reserva.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir contrato y restricciones de duración**. Dificultad: Medio.
-- [ ] **T-02 — Persistir catálogo y proteger bajas referenciadas**. Dificultad: Medio.
-- [ ] **T-03 — Construir CRUD ADMIN con validación**. Dificultad: Medio.
-- [ ] **T-04 — Probar duración inválida, rol y desactivación**. Dificultad: Medio.
+- [x] **T-01 — Definir contrato y restricciones de duración**. Dificultad: Medio.
+- [x] **T-02 — Persistir catálogo y proteger bajas referenciadas**. Dificultad: Medio.
+- [x] **T-03 — Construir CRUD ADMIN con validación**. Dificultad: Medio.
+- [x] **T-04 — Probar duración inválida, rol y desactivación**. Dificultad: Medio.
 ## Criterios de aceptación
 ### CA-01 — Duración válida
 **Dado** ADMIN **cuando** crea o edita una especialidad **entonces** solo puede asignar 30 o 60 minutos.
@@ -35,14 +35,21 @@ relacionadas: ["[[HU-011-configurar-capacidades-profesional]]", "[[HU-015-consul
 ### CA-03 — Uso posterior
 **Dado** una especialidad activa **cuando** se consume en agenda/disponibilidad **entonces** su duración es la referencia aplicable.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados; API y UI restringen valores sin sustituir validación servidor.
-- [ ] Migración/documentación 3FN mantiene especialidad como catálogo único.
-- [ ] Dependencias de HU-011/HU-015 actualizadas.
+- [x] CA-01 a CA-03 validados; API y UI restringen valores sin sustituir validación servidor.
+- [x] Migración/documentación 3FN mantiene especialidad como catálogo único.
+- [x] Dependencias de HU-011/HU-015 actualizadas.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `SpecialtyIT`, `SpecialtyServiceTest`: duración distinta de 30/60 → 400 (smoke: 45 → 400); CHECK `ck_specialty_duration` en BD | API `cf886f0` |
+| CA-02 | Conforme | Sin borrado físico; desactivación → 200 y la especialidad sale de `GET /specialties` (smoke) | — |
+| CA-03 | Conforme | Las citas guardan `scheduled_end_at`; la duración vigente del catálogo aplica a nuevas reservas. Segunda general activa → 409 `GENERAL_SPECIALTY_CONFLICT` | Consumo en HU-015 (Ola C) |
+| DoD rol | Conforme | `GET/POST/PATCH /admin/specialties` exigen ADMIN (antes GET estaba abierto); USER → 403 | RED: compilación del servicio nuevo |
+| DoD UI | Conforme | Web `6de9b64`: selector limitado a 30/60, bandera general, activar/desactivar y mensajes de conflicto | Servidor conserva la autoridad |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
+- 2026-10-03 — Corregida (listado ADMIN abierto, varias generales) y validada (API `cf886f0`; web `6de9b64`).
+
 ## Notas y decisiones
 - Medicina General se identifica en el catálogo sin fijar implementación.
