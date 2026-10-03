@@ -16,7 +16,7 @@ class FlywayEmptyDatabaseIT extends AbstractMySqlIT {
                 "SELECT MIN(installed_rank) FROM flyway_schema_history", Integer.class);
 
         assertThat(failed).isZero();
-        assertThat(applied).isGreaterThanOrEqualTo(7);
+        assertThat(applied).isGreaterThanOrEqualTo(8);
         assertThat(firstRank).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM roles WHERE code IN ('USER','PROFESSIONAL','ADMIN')",
                 Integer.class)).isEqualTo(3);
