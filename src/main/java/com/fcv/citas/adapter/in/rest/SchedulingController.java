@@ -33,21 +33,9 @@ public class SchedulingController {
         return service.saveAffiliation(userId(jwt), request.planId(), request.membershipNumber());
     }
 
-    @GetMapping("/admin/eps") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> eps() { return service.eps(); }
     @GetMapping("/admin/locations") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> locations() { return service.locations(); }
-    @PostMapping("/admin/eps") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createEps(@Valid @RequestBody EpsRequest r) { return service.createEps(r.code(),r.name()); }
-    @PatchMapping("/admin/eps/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updateEps(@PathVariable long id,@Valid @RequestBody CatalogUpdateRequest r){return service.updateEps(id,r.name(),r.active());}
 
-    @GetMapping("/admin/plans") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> plans(@RequestParam(required=false) Long epsId){return service.plans(epsId);}
-    @PostMapping("/admin/eps/{epsId}/plans") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createPlan(@PathVariable long epsId,@Valid @RequestBody PlanRequest r){return service.createPlan(epsId,r.regimeId(),r.code(),r.name());}
-    @PatchMapping("/admin/plans/{id}") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> updatePlan(@PathVariable long id,@Valid @RequestBody CatalogUpdateRequest r){return service.updatePlan(id,r.name(),r.active());}
 
     @GetMapping("/admin/specialties")
     List<Map<String,Object>> specialties(){return service.specialties();}
@@ -101,9 +89,6 @@ public class SchedulingController {
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
     record AffiliationRequest(@NotNull Long planId,@NotBlank @Size(max=80) String membershipNumber){}
-    record EpsRequest(@NotBlank @Size(max=40) String code,@NotBlank @Size(max=160) String name){}
-    record CatalogUpdateRequest(@NotBlank @Size(max=160) String name,boolean active){}
-    record PlanRequest(@NotNull Long regimeId,@NotBlank String code,@NotBlank String name){}
     record SpecialtyRequest(@NotBlank String code,@NotBlank String name,@NotNull Integer durationMinutes,boolean general){}
     record SpecialtyUpdateRequest(@NotBlank String name,@NotNull Integer durationMinutes,boolean active){}
     record ProfessionalRequest(@NotBlank String firstName,@NotBlank String lastName,@NotBlank String documentType,@NotBlank String documentNumber,@Email @NotBlank String email,@NotBlank String phone,@NotBlank @Size(min=8,max=72) String password,@NotBlank String professionalCode,@NotBlank String licenseNumber){}

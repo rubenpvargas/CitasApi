@@ -49,44 +49,8 @@ public class SchedulingService {
         return affiliations(userId).get(0);
     }
 
-    public List<Map<String, Object>> eps() {
-        return jdbc.queryForList("SELECT id, code, name, active FROM eps ORDER BY name");
-    }
-
     public List<Map<String, Object>> locations() {
         return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
-    }
-
-    @Transactional
-    public Map<String, Object> createEps(String code, String name) {
-        jdbc.update("INSERT INTO eps(code,name,active,created_at,updated_at) VALUES(?,?,TRUE,NOW(6),NOW(6))", code, name);
-        return one("SELECT id,code,name,active FROM eps WHERE code=?", code);
-    }
-
-    @Transactional
-    public Map<String, Object> updateEps(long id, String name, boolean active) {
-        jdbc.update("UPDATE eps SET name=?, active=?, updated_at=NOW(6) WHERE id=?", name, active, id);
-        return one("SELECT id,code,name,active FROM eps WHERE id=?", id);
-    }
-
-    public List<Map<String, Object>> plans(Long epsId) {
-        String sql = "SELECT p.id,p.code,p.name,p.active,p.eps_id epsId,e.code epsCode,e.name epsName, "
-                + "r.id regimeId,r.code regimeCode,r.name regimeName FROM eps_plans p JOIN eps e ON e.id=p.eps_id "
-                + "JOIN insurance_regimes r ON r.id=p.regime_id";
-        if (epsId == null) return jdbc.queryForList(sql + " ORDER BY e.name,p.name");
-        return jdbc.queryForList(sql + " WHERE p.eps_id=? ORDER BY p.name", epsId);
-    }
-
-    @Transactional
-    public Map<String, Object> createPlan(long epsId, long regimeId, String code, String name) {
-        jdbc.update("INSERT INTO eps_plans(eps_id,regime_id,code,name,active) VALUES(?,?,?,?,TRUE)", epsId, regimeId, code, name);
-        return one("SELECT id,code,name,active,eps_id epsId,regime_id regimeId FROM eps_plans WHERE eps_id=? AND code=?", epsId, code);
-    }
-
-    @Transactional
-    public Map<String, Object> updatePlan(long id, String name, boolean active) {
-        jdbc.update("UPDATE eps_plans SET name=?, active=? WHERE id=?", name, active, id);
-        return one("SELECT id,code,name,active,eps_id epsId,regime_id regimeId FROM eps_plans WHERE id=?", id);
     }
 
     public List<Map<String, Object>> specialties() {
