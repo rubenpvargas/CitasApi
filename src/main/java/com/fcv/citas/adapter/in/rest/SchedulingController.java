@@ -45,8 +45,6 @@ public class SchedulingController {
     List<Map<String,Object>> inbox(){return service.adminInbox();}
     @GetMapping("/admin/automation/appointments/reminders") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> reminderAppointments(@RequestParam(defaultValue = "24") int hours){return service.upcomingReminderAppointments(hours);}
-    @PostMapping("/admin/appointments/{id}/decision") @PreAuthorize("hasRole('ADMIN')")
-    void appointmentDecision(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody DecisionRequest r){service.decideAppointment(userId(jwt),id,r.approve(),r.reason());}
     @PostMapping("/admin/reschedules/{id}/decision") @PreAuthorize("hasRole('ADMIN')")
     void rescheduleDecision(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody DecisionRequest r){service.decideReschedule(userId(jwt),id,r.approve(),r.reason());}
 

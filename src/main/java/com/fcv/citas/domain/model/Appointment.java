@@ -18,6 +18,24 @@ public record Appointment(long id, long patientUserId, String patientName, long 
         return (int) Duration.between(startAt, endAt).toMinutes();
     }
 
+    /**
+     * HU-018 — solo una cita REQUESTED se decide; aprobar → APPROVED (conserva slots), rechazar exige
+     * motivo → REJECTED (el caso de uso libera los slots).
+     */
+    public AppointmentStatus decide(boolean approve, String reason) {
+        if (status != AppointmentStatus.REQUESTED) {
+            throw invalidTransition("Only requested appointments can be decided");
+        }
+        if (!approve && (reason == null || reason.isBlank())) {
+            throw new DomainRuleViolation("REJECTION_REASON_REQUIRED", "A rejection requires a reason");
+        }
+        return approve ? AppointmentStatus.APPROVED : AppointmentStatus.REJECTED;
+    }
+
+    static DomainRuleViolation invalidTransition(String message) {
+        return new DomainRuleViolation("INVALID_TRANSITION", message);
+    }
+
     /** HU-020 — propia (resuelto por el caso de uso), futura y en REQUESTED|APPROVED. */
     public boolean cancellableAt(LocalDateTime now) {
         return (status == AppointmentStatus.REQUESTED || status == AppointmentStatus.APPROVED) && startAt.isAfter(now);
