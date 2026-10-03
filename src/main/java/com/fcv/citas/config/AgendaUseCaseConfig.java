@@ -2,15 +2,19 @@ package com.fcv.citas.config;
 
 import com.fcv.citas.application.port.in.AffiliationUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
+import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
 import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
 import com.fcv.citas.application.port.out.InsuranceCatalogRepositoryPort;
+import com.fcv.citas.application.port.out.PasswordHashPort;
+import com.fcv.citas.application.port.out.ProfessionalRepositoryPort;
 import com.fcv.citas.application.port.out.ProfileRepositoryPort;
 import com.fcv.citas.application.port.out.SpecialtyRepositoryPort;
 import com.fcv.citas.application.port.out.TransactionPort;
 import com.fcv.citas.application.service.AffiliationService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
+import com.fcv.citas.application.service.ProfessionalAdminService;
 import com.fcv.citas.application.service.ProfileService;
 import com.fcv.citas.application.service.SpecialtyService;
 import org.springframework.context.annotation.Bean;
@@ -41,5 +45,12 @@ public class AgendaUseCaseConfig {
     AffiliationUseCase affiliationUseCase(AffiliationRepositoryPort affiliations, InsuranceCatalogRepositoryPort catalog,
                                           TransactionPort transactions, Clock clock) {
         return new AffiliationService(affiliations, catalog, transactions, clock);
+    }
+
+    @Bean
+    ProfessionalAdminUseCase professionalAdminUseCase(ProfessionalRepositoryPort professionals,
+                                                      SpecialtyRepositoryPort specialties, PasswordHashPort passwords,
+                                                      TransactionPort transactions, Clock clock) {
+        return new ProfessionalAdminService(professionals, specialties, passwords, transactions, clock);
     }
 }

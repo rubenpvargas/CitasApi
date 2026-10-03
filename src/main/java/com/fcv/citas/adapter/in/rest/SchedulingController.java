@@ -30,10 +30,6 @@ public class SchedulingController {
 
 
 
-    @GetMapping("/admin/professionals") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> professionals(){return service.professionals();}
-    @PostMapping("/admin/professionals") @PreAuthorize("hasRole('ADMIN')")
-    Map<String,Object> createProfessional(@Valid @RequestBody ProfessionalRequest r){return service.createProfessional(r.firstName(),r.lastName(),r.documentType(),r.documentNumber(),r.email(),r.phone(),r.password(),r.professionalCode(),r.licenseNumber());}
     @PutMapping("/admin/professionals/{id}/capabilities") @PreAuthorize("hasRole('ADMIN')")
     Map<String,Object> configureProfessional(@PathVariable long id,@Valid @RequestBody CapabilitiesRequest r){return service.configureProfessional(id,r.specialtyIds(),r.primarySpecialtyId(),r.locationIds(),r.active());}
 
@@ -74,7 +70,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record ProfessionalRequest(@NotBlank String firstName,@NotBlank String lastName,@NotBlank String documentType,@NotBlank String documentNumber,@Email @NotBlank String email,@NotBlank String phone,@NotBlank @Size(min=8,max=72) String password,@NotBlank String professionalCode,@NotBlank String licenseNumber){}
     record CapabilitiesRequest(@NotNull List<Long> specialtyIds,Long primarySpecialtyId,@NotNull List<Long> locationIds,boolean active){}
     record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}
     record BookingRequest(Long specialtyId,@NotNull Long professionalId,@NotBlank String locationCode,@NotBlank String startAt,String reason){}

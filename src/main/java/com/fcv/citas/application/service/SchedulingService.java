@@ -34,29 +34,6 @@ public class SchedulingService {
         return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
     }
 
-    public List<Map<String, Object>> professionals() {
-        return jdbc.queryForList("SELECT p.id,p.professional_code professionalCode,p.license_number licenseNumber,p.active, "
-                + "u.id userId,u.first_name firstName,u.last_name lastName,u.email,u.phone, "
-                + "GROUP_CONCAT(DISTINCT s.code ORDER BY s.code) specialtyCodes, GROUP_CONCAT(DISTINCT l.code ORDER BY l.code) locationCodes "
-                + "FROM professionals p JOIN users u ON u.id=p.user_id LEFT JOIN professional_specialties ps ON ps.professional_id=p.id AND ps.active=TRUE "
-                + "LEFT JOIN specialties s ON s.id=ps.specialty_id LEFT JOIN professional_locations pl ON pl.professional_id=p.id AND pl.active=TRUE "
-                + "LEFT JOIN locations l ON l.id=pl.location_id GROUP BY p.id,u.id ORDER BY u.last_name,u.first_name");
-    }
-
-    @Transactional
-    public Map<String, Object> createProfessional(String firstName, String lastName, String documentType,
-                                                   String documentNumber, String email, String phone, String password,
-                                                   String professionalCode, String licenseNumber) {
-        jdbc.update("INSERT INTO users(first_name,last_name,document_type,document_number,email,phone,password_hash,active,created_at,updated_at) "
-                + "VALUES(?,?,?,?,?,?,?,TRUE,NOW(6),NOW(6))", firstName, lastName, documentType, documentNumber, email, phone, passwordEncoder.encode(password));
-        long userId = jdbc.queryForObject("SELECT id FROM users WHERE email=?", Long.class, email);
-        jdbc.update("INSERT INTO user_roles(user_id,role_id) SELECT ?,id FROM roles WHERE code='PROFESSIONAL'", userId);
-        jdbc.update("INSERT INTO professionals(user_id,professional_code,license_number,active,created_at,updated_at) VALUES(?,?,?,TRUE,NOW(6),NOW(6))",
-                userId, professionalCode, licenseNumber);
-        return one("SELECT p.id,p.professional_code professionalCode,p.license_number licenseNumber,p.active,u.id userId,u.first_name firstName,u.last_name lastName,u.email "
-                + "FROM professionals p JOIN users u ON u.id=p.user_id WHERE p.user_id=?", userId);
-    }
-
     @Transactional
     public Map<String, Object> configureProfessional(long professionalId, List<Long> specialtyIds, Long primarySpecialtyId,
                                                        List<Long> locationIds, boolean active) {
