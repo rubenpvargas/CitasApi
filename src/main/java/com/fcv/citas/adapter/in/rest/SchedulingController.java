@@ -25,14 +25,6 @@ public class SchedulingController {
 
     public SchedulingController(SchedulingService service) { this.service = service; }
 
-    @GetMapping("/me/affiliations")
-    List<Map<String,Object>> affiliations(@AuthenticationPrincipal Jwt jwt) { return service.affiliations(userId(jwt)); }
-
-    @PutMapping("/me/affiliations")
-    Map<String,Object> affiliation(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AffiliationRequest request) {
-        return service.saveAffiliation(userId(jwt), request.planId(), request.membershipNumber());
-    }
-
     @GetMapping("/admin/locations") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> locations() { return service.locations(); }
 
@@ -82,7 +74,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record AffiliationRequest(@NotNull Long planId,@NotBlank @Size(max=80) String membershipNumber){}
     record ProfessionalRequest(@NotBlank String firstName,@NotBlank String lastName,@NotBlank String documentType,@NotBlank String documentNumber,@Email @NotBlank String email,@NotBlank String phone,@NotBlank @Size(min=8,max=72) String password,@NotBlank String professionalCode,@NotBlank String licenseNumber){}
     record CapabilitiesRequest(@NotNull List<Long> specialtyIds,Long primarySpecialtyId,@NotNull List<Long> locationIds,boolean active){}
     record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}

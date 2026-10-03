@@ -30,25 +30,6 @@ public class SchedulingService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<Map<String, Object>> affiliations(long userId) {
-        return jdbc.queryForList("SELECT a.id, a.membership_number membershipNumber, a.is_current current, "
-                + "p.id planId, p.code planCode, p.name planName, e.id epsId, e.code epsCode, e.name epsName, "
-                + "r.code regimeCode, r.name regimeName FROM user_insurance_affiliations a "
-                + "JOIN eps_plans p ON p.id=a.plan_id JOIN eps e ON e.id=p.eps_id "
-                + "JOIN insurance_regimes r ON r.id=p.regime_id WHERE a.user_id=? ORDER BY a.is_current DESC, a.id DESC", userId);
-    }
-
-    @Transactional
-    public Map<String, Object> saveAffiliation(long userId, long planId, String membershipNumber) {
-        Map<String, Object> plan = one("SELECT p.id FROM eps_plans p JOIN eps e ON e.id=p.eps_id "
-                + "WHERE p.id=? AND p.active=TRUE AND e.active=TRUE", planId);
-        jdbc.update("UPDATE user_insurance_affiliations SET is_current=FALSE, valid_to=CURDATE() "
-                + "WHERE user_id=? AND is_current=TRUE", userId);
-        jdbc.update("INSERT INTO user_insurance_affiliations(user_id,plan_id,membership_number,is_current,valid_from,created_at) "
-                + "VALUES(?,?,?,TRUE,CURDATE(),NOW(6))", userId, plan.get("id"), membershipNumber);
-        return affiliations(userId).get(0);
-    }
-
     public List<Map<String, Object>> locations() {
         return jdbc.queryForList("SELECT id, code, name, address, city, department, active FROM locations ORDER BY name");
     }
