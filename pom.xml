@@ -86,4 +86,37 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          Pruebas de integración REST + persistencia contra MySQL real (clases *IT.java).
+          El datasource llega SOLO por variables de entorno: IT_DB_URL, IT_DB_USER, IT_DB_PASSWORD.
+          La base indicada se limpia y se migra con Flyway al iniciar: usar una base desechable.
+          Uso: mvn -B -Pit verify
+        -->
+        <profile>
+            <id>it</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
