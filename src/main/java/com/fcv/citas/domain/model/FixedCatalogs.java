@@ -5,7 +5,7 @@ import java.util.List;
 public record FixedCatalogs(List<CatalogEntry> roles,
                             List<CatalogStatus> appointmentStatuses,
                             List<CatalogStatus> rescheduleRequestStatuses,
-                            List<CatalogEntry> insuranceRegimes,
+                            List<InsuranceRegime> insuranceRegimes,
                             List<CatalogLocation> locations) {
     public FixedCatalogs {
         roles = List.copyOf(roles);
