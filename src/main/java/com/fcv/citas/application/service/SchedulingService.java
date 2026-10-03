@@ -31,32 +31,6 @@ public class SchedulingService {
         this.clock = clock;
     }
 
-    @Transactional
-    public Map<String, Object> updateBlock(long userId, long blockId, LocalDate date, LocalTime start, LocalTime end, String locationCode) {
-        long professionalId = professionalId(userId);
-        Map<String, Object> block = one("SELECT id FROM availability_blocks WHERE id=? AND professional_id=? AND active=TRUE", blockId, professionalId);
-        if (!date.isAfter(LocalDate.now(clock))) throw new BusinessException("PAST_BLOCK", "A block must be in the future");
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_slots WHERE availability_block_id=? AND appointment_id IS NOT NULL", Integer.class, blockId) > 0)
-            throw new BusinessException("COMMITTED_BLOCK", "A block with a committed appointment cannot be edited");
-        long locationId = locationId(locationCode);
-        jdbc.update("UPDATE availability_blocks SET available_date=?,start_time=?,end_time=?,location_id=?,updated_at=NOW(6) WHERE id=?", date, Time.valueOf(start), Time.valueOf(end), locationId, blockId);
-        jdbc.update("DELETE FROM professional_slots WHERE availability_block_id=?", blockId);
-        for (LocalTime slot = start; !slot.plusMinutes(30).isAfter(end); slot = slot.plusMinutes(30))
-            jdbc.update("INSERT INTO professional_slots(availability_block_id,start_at,end_at) VALUES(?,?,?)", blockId, (LocalDateTime.of(date,slot)), (LocalDateTime.of(date,slot.plusMinutes(30))));
-        return block;
-    }
-
-    @Transactional
-    public void deleteBlock(long userId, long blockId) {
-        long professionalId = professionalId(userId);
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM availability_blocks WHERE id=? AND professional_id=? AND active=TRUE", Integer.class, blockId, professionalId) == 0)
-            throw new BusinessException("NOT_FOUND", "Availability block not found");
-        if (jdbc.queryForObject("SELECT COUNT(*) FROM professional_slots WHERE availability_block_id=? AND (appointment_id IS NOT NULL OR reschedule_request_id IS NOT NULL)", Integer.class, blockId) > 0)
-            throw new BusinessException("COMMITTED_BLOCK", "A committed block cannot be deleted");
-        jdbc.update("UPDATE availability_blocks SET active=FALSE,updated_at=NOW(6) WHERE id=?", blockId);
-        jdbc.update("DELETE FROM professional_slots WHERE availability_block_id=?", blockId);
-    }
-
     public List<Map<String, Object>> calendar(long userId, LocalDate from, LocalDate to) {
         long professionalId = professionalId(userId);
         return jdbc.queryForList("SELECT b.id,b.available_date availableDate,b.start_time startTime,b.end_time endTime,l.code locationCode,l.name locationName "

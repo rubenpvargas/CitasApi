@@ -55,6 +55,54 @@ public final class AvailabilityBlockService implements AvailabilityBlockUseCase 
         });
     }
 
+    /**
+     * HU-013 — solo bloques propios (ajeno o inexistente → 404), futuros y sin compromisos; el nuevo
+     * horario se revalida completo con las reglas de HU-012 ignorando el propio bloque en el solape.
+     */
+    @Override
+    public AvailabilityBlock update(long userId, long blockId, BlockCommand command) {
+        ProfessionalAccount account = account(userId);
+        BlockSchedule schedule = new BlockSchedule(command.date(), command.startTime(), command.endTime());
+        BlockValidator.validateShape(schedule).ifPresent(AvailabilityBlockService::reject);
+        return transactions.required(() -> {
+            LocalDateTime now = LocalDateTime.now(clock);
+            requireEditable(account, blockId, now);
+            long locationId = assignedLocation(account, command.locationCode());
+            professionals.lock(account.professionalId());
+            BlockValidator.validate(schedule, now, blocks.findActiveSchedules(account.professionalId(), schedule.date()),
+                    blockId).ifPresent(AvailabilityBlockService::reject);
+            blocks.update(blockId, locationId, schedule, clock.instant());
+            blocks.deleteFreeSlots(blockId);
+            blocks.insertSlots(blockId, schedule.slots());
+            return blocks.findActiveOwned(blockId, account.professionalId()).orElseThrow();
+        });
+    }
+
+    /** HU-013 — baja lógica: el bloque queda inactivo y se retiran sus slots libres. */
+    @Override
+    public void delete(long userId, long blockId) {
+        ProfessionalAccount account = account(userId);
+        transactions.required(() -> {
+            requireEditable(account, blockId, LocalDateTime.now(clock));
+            blocks.deleteFreeSlots(blockId);
+            blocks.deactivate(blockId, clock.instant());
+        });
+    }
+
+    private void requireEditable(ProfessionalAccount account, long blockId, LocalDateTime now) {
+        blocks.findActiveOwned(blockId, account.professionalId())
+                .orElseThrow(() -> new NotFoundException("Availability block not found"));
+        blocks.lockBlock(blockId);
+        AvailabilityBlock current = blocks.findActiveOwned(blockId, account.professionalId()).orElseThrow();
+        current.notEditableReason(now).ifPresent(reason -> {
+            throw switch (reason) {
+                case PAST_BLOCK -> new BusinessRuleException("PAST_BLOCK", "A past block cannot be changed");
+                case BLOCK_COMMITTED -> new BusinessRuleException("BLOCK_COMMITTED",
+                        "The block has booked or held slots");
+            };
+        });
+    }
+
     ProfessionalAccount account(long userId) {
         return professionals.findAccountByUserId(userId)
                 .orElseThrow(() -> new ForbiddenException("An active professional profile is required"));

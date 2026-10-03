@@ -46,6 +46,7 @@ final class InMemoryBlocks implements AvailabilityBlockRepositoryPort {
         rows.put(r.id, r);
         return r.id;
     }
+    @Override public void lockBlock(long blockId) { }
     @Override public void insertSlots(long blockId, List<SlotTime> slots) { rows.get(blockId).slots.addAll(slots); }
     @Override public Optional<AvailabilityBlock> findActiveOwned(long blockId, long professionalId) {
         Row r = rows.get(blockId);

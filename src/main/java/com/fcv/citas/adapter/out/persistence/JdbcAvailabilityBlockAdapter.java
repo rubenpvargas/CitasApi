@@ -83,6 +83,12 @@ public class JdbcAvailabilityBlockAdapter implements AvailabilityBlockRepository
     }
 
     @Override
+    public void lockBlock(long blockId) {
+        jdbc.queryForList("SELECT id FROM availability_blocks WHERE id = ? FOR UPDATE", Long.class, blockId);
+        jdbc.queryForList("SELECT id FROM professional_slots WHERE availability_block_id = ? FOR UPDATE", Long.class, blockId);
+    }
+
+    @Override
     public Optional<AvailabilityBlock> findActiveOwned(long blockId, long professionalId) {
         return jdbc.query(BLOCK_SELECT + "WHERE b.id = ? AND b.professional_id = ? AND b.active = TRUE" + BLOCK_GROUP,
                 BLOCK, blockId, professionalId).stream().findFirst();

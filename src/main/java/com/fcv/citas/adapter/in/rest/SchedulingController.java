@@ -29,10 +29,6 @@ public class SchedulingController {
 
 
 
-    @PatchMapping("/professional/blocks/{id}") @PreAuthorize("hasRole('PROFESSIONAL')")
-    Map<String,Object> updateBlock(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody BlockRequest r){return service.updateBlock(userId(jwt),id,r.date(),r.startTime(),r.endTime(),r.locationCode());}
-    @DeleteMapping("/professional/blocks/{id}") @PreAuthorize("hasRole('PROFESSIONAL')")
-    void deleteBlock(@AuthenticationPrincipal Jwt jwt,@PathVariable long id){service.deleteBlock(userId(jwt),id);}
     @GetMapping("/professional/calendar") @PreAuthorize("hasRole('PROFESSIONAL')")
     List<Map<String,Object>> calendar(@AuthenticationPrincipal Jwt jwt,@RequestParam LocalDate from,@RequestParam LocalDate to){return service.calendar(userId(jwt),from,to);}
     @GetMapping("/professional/agenda") @PreAuthorize("hasRole('PROFESSIONAL')")
@@ -64,7 +60,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record BlockRequest(@NotNull @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@NotNull LocalTime startTime,@NotNull LocalTime endTime,@NotBlank String locationCode){}
     record BookingRequest(Long specialtyId,@NotNull Long professionalId,@NotBlank String locationCode,@NotBlank String startAt,String reason){}
     record RescheduleRequest(@NotBlank String startAt,@NotBlank String locationCode){}
     record DecisionRequest(boolean approve,String reason){}
