@@ -20,18 +20,21 @@ import com.fcv.citas.application.service.CatalogQueryService;
 import com.fcv.citas.application.service.PasswordRecoveryService;
 import com.fcv.citas.application.service.RegisterUserService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
+import java.time.ZoneId;
 import java.time.Duration;
 
 @Configuration
 @EnableConfigurationProperties(PasswordResetProperties.class)
 public class ApplicationConfig {
+    /** Reloj único de la aplicación; su zona (app.time-zone) define la hora local de pared de la agenda. */
     @Bean
-    Clock clock() {
-        return Clock.systemUTC();
+    Clock clock(@Value("${app.time-zone:America/Bogota}") String timeZone) {
+        return Clock.system(ZoneId.of(timeZone));
     }
 
     @Bean

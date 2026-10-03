@@ -8,6 +8,7 @@ import com.fcv.citas.application.exception.InvalidCredentialsException;
 import com.fcv.citas.application.exception.InvalidPasswordException;
 import com.fcv.citas.application.exception.InvalidRefreshTokenException;
 import com.fcv.citas.application.exception.NotFoundException;
+import com.fcv.citas.application.exception.RequestValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -68,6 +69,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             case "FORBIDDEN" -> forbidden();
             default -> problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
         };
+    }
+
+    @ExceptionHandler(RequestValidationException.class)
+    ResponseEntity<Object> requestValidation(RequestValidationException exception) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "One or more fields are invalid");
+        detail.setTitle("Validation failed");
+        detail.setProperty("code", "VALIDATION_ERROR");
+        detail.setProperty("errors", List.of(Map.of("field", exception.field(), "message", exception.getMessage())));
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_PROBLEM_JSON).body(detail);
     }
 
     @ExceptionHandler(InvalidPasswordException.class)

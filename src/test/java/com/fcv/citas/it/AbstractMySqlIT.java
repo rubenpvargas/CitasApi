@@ -93,4 +93,30 @@ public abstract class AbstractMySqlIT {
     protected String bearer(String accessToken) {
         return "Bearer " + accessToken;
     }
+
+    /** Registra un USER sintético, le añade los roles indicados en la base de pruebas y devuelve su access token. */
+    protected String tokenWithRoles(String... extraRoles) throws Exception {
+        String email = registerUser();
+        for (String role : extraRoles) {
+            jdbc.update("INSERT INTO user_roles(user_id, role_id) SELECT u.id, r.id FROM users u, roles r "
+                    + "WHERE u.email = ? AND r.code = ?", email, role);
+        }
+        return bearer(login(email, STRONG_PASSWORD).get("accessToken").asText());
+    }
+
+    protected String userToken() throws Exception {
+        return tokenWithRoles();
+    }
+
+    protected String adminToken() throws Exception {
+        return tokenWithRoles("ADMIN");
+    }
+
+    protected JsonNode body(MvcResult result) throws Exception {
+        return json.readTree(result.getResponse().getContentAsString());
+    }
+
+    protected String toJson(Object value) throws Exception {
+        return json.writeValueAsString(value);
+    }
 }

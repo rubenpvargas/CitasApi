@@ -17,6 +17,8 @@ spring:
     enabled: true
 
 app:
+  # Zona de la hora local de pared de la agenda (ISO-8601 sin offset en la API).
+  time-zone: ${APP_TIME_ZONE:America/Bogota}
   security:
     issuer: citas-api
     access-secret: ${JWT_ACCESS_SECRET}

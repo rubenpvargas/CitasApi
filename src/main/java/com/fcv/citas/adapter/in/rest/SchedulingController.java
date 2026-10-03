@@ -25,14 +25,6 @@ public class SchedulingController {
 
     public SchedulingController(SchedulingService service) { this.service = service; }
 
-    @GetMapping("/me")
-    Map<String,Object> profile(@AuthenticationPrincipal Jwt jwt) { return service.profile(userId(jwt)); }
-
-    @PatchMapping("/me")
-    Map<String,Object> updateProfile(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ProfileRequest request) {
-        return service.updateProfile(userId(jwt), request.firstName(), request.lastName(), request.phone());
-    }
-
     @GetMapping("/me/affiliations")
     List<Map<String,Object>> affiliations(@AuthenticationPrincipal Jwt jwt) { return service.affiliations(userId(jwt)); }
 
@@ -108,7 +100,6 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record ProfileRequest(@NotBlank @Size(max=100) String firstName,@NotBlank @Size(max=100) String lastName,@NotBlank @Size(max=32) String phone){}
     record AffiliationRequest(@NotNull Long planId,@NotBlank @Size(max=80) String membershipNumber){}
     record EpsRequest(@NotBlank @Size(max=40) String code,@NotBlank @Size(max=160) String name){}
     record CatalogUpdateRequest(@NotBlank @Size(max=160) String name,boolean active){}

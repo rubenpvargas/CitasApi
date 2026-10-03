@@ -30,18 +30,6 @@ public class SchedulingService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Map<String, Object> profile(long userId) {
-        return one("SELECT id, first_name firstName, last_name lastName, document_type documentType, "
-                + "document_number documentNumber, email, phone FROM users WHERE id=? AND active=TRUE", userId);
-    }
-
-    @Transactional
-    public Map<String, Object> updateProfile(long userId, String firstName, String lastName, String phone) {
-        jdbc.update("UPDATE users SET first_name=?, last_name=?, phone=?, updated_at=NOW(6) WHERE id=?",
-                firstName, lastName, phone, userId);
-        return profile(userId);
-    }
-
     public List<Map<String, Object>> affiliations(long userId) {
         return jdbc.queryForList("SELECT a.id, a.membership_number membershipNumber, a.is_current current, "
                 + "p.id planId, p.code planCode, p.name planName, e.id epsId, e.code epsCode, e.name epsName, "
