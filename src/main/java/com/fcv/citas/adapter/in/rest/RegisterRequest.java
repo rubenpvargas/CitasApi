@@ -11,6 +11,6 @@ public record RegisterRequest(
         @NotBlank @Size(max = 64) String documentNumber,
         @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Size(max = 32) String phone,
-        @NotBlank @Size(min = 8, max = 72) String password
+        @NotBlank @StrongPassword String password
 ) {
 }
