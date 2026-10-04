@@ -23,10 +23,10 @@ relacionadas: ["[[HU-020-cancelar-cita]]", "[[HU-025-gestionar-bandeja-administr
 ## Esfuerzo
 **Nivel:** Alto. **Justificación:** operación atómica sobre dos reservas y decisiones administrativas.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir contrato, estados y motivo de decisión**. Dificultad: Medio.
-- [ ] **T-02 — Implementar traslado/liberación atómicos y auditoría**. Dificultad: Alto.
-- [ ] **T-03 — Crear interfaz ADMIN de decisión**. Dificultad: Medio.
-- [ ] **T-04 — Probar aprobación, rechazo, reintento y disponibilidad resultante**. Dificultad: Alto.
+- [x] **T-01 — Definir contrato, estados y motivo de decisión**. Dificultad: Medio.
+- [x] **T-02 — Implementar traslado/liberación atómicos y auditoría**. Dificultad: Alto.
+- [x] **T-03 — Crear interfaz ADMIN de decisión**. Dificultad: Medio.
+- [x] **T-04 — Probar aprobación, rechazo, reintento y disponibilidad resultante**. Dificultad: Alto.
 ## Criterios de aceptación
 ### CA-01 — Aprobación
 **Dado** reprogramación PENDING **cuando** ADMIN aprueba **entonces** cita adopta nueva franja y se liberan slots antiguos.
@@ -35,14 +35,20 @@ relacionadas: ["[[HU-020-cancelar-cita]]", "[[HU-025-gestionar-bandeja-administr
 ### CA-03 — Integridad
 **Dado** decisión ya tomada o inválida **cuando** se intenta decidir de nuevo **entonces** no se alteran las franjas ni el historial previo.
 ## Definition of Done
-- [ ] CA-01 a CA-03 con pruebas transaccionales y de disponibilidad posterior.
-- [ ] Auditoría conserva actor, fuente, fecha, estado y motivo aplicable.
-- [ ] Contrato/UI diferencian claramente decisión aprobada, rechazada y pendiente.
+- [x] CA-01 a CA-03 con pruebas transaccionales y de disponibilidad posterior.
+- [x] Auditoría conserva actor, fuente, fecha, estado y motivo aplicable.
+- [x] Contrato/UI diferencian claramente decisión aprobada, rechazada y pendiente.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `RescheduleDecisionIT`, `RescheduleDecisionServiceTest` rl1: aprobar mueve la cita a la nueva franja, libera la antigua y asigna la retenida; E2E "reprogramación solicitada y aprobada"; evento `RESCHEDULE_APPROVED` entregado | API `1f0b78b`; web `39d1012` |
+| CA-02 | Conforme | rl2: rechazar con motivo libera la retención y mantiene la original | — |
+| CA-03 | Conforme | rl3: decisión repetida o rechazo sin motivo → 409 sin alterar franjas; bloqueo de solicitud y cita | — |
+| DoD | Conforme | Historial ADMIN en solicitud y cita (actor, fuente, fecha, estado, motivo); UI distingue pendiente/aprobada/rechazada y compara franjas | — |
+
 ## Historial de validación
 - 2026-09-17 — Creada en Pendiente de aprobación.
+- 2026-10-04 — Validada con IT, prueba de escritorio, E2E desde base limpia y evento WF-002 (API `1f0b78b`; web `39d1012`).
+
 ## Notas y decisiones
 - USER conserva la cita o puede cancelarla después de rechazo.
