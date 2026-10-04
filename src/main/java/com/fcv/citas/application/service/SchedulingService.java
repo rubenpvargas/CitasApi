@@ -34,8 +34,6 @@ public class SchedulingService {
 
 
 
-    @Transactional
-    public void closeAppointment(long userId,long appointmentId,String outcome){long p=professionalId(userId);Map<String,Object>a=one("SELECT a.id,a.scheduled_start_at startAt,st.code status FROM appointments a JOIN appointment_statuses st ON st.id=a.status_id WHERE a.id=? AND a.professional_id=?",appointmentId,p);if(!"APPROVED".equals(a.get("status")))throw new BusinessException("INVALID_TRANSITION","Only approved appointments can be closed");if(asDateTime(a.get("startAt")).isAfter(LocalDateTime.now(clock)))throw new BusinessException("APPOINTMENT_NOT_APPLICABLE","The appointment is not applicable yet");if(!List.of("COMPLETED","NO_SHOW").contains(outcome))throw new BusinessException("INVALID_OUTCOME","Outcome must be COMPLETED or NO_SHOW");transitionAppointment(appointmentId,outcome,userId,"USER","Professional closed appointment");}
 
 
 

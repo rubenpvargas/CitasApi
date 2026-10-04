@@ -37,6 +37,21 @@ public final class ProfessionalAgendaService implements ProfessionalAgendaUseCas
         return appointments.findAgenda(account.professionalId(), from, to, location);
     }
 
+    @Override
+    public Appointment close(long userId, long appointmentId, com.fcv.citas.domain.model.AppointmentStatus outcome) {
+        ProfessionalAccount account = account(userId);
+        return transactions.required(() -> {
+            Appointment current = appointments.lockById(appointmentId)
+                    .filter(a -> a.professionalId() == account.professionalId())
+                    .orElseThrow(() -> new com.fcv.citas.application.exception.NotFoundException("Appointment not found"));
+            com.fcv.citas.domain.model.AppointmentStatus target = current.closeTo(outcome, java.time.LocalDateTime.now(clock));
+            appointments.updateStatus(appointmentId, target, null, null, clock.instant());
+            appointments.addHistory(appointmentId, target, userId, "PROFESSIONAL", "Attention closed by professional",
+                    clock.instant());
+            return appointments.findById(appointmentId).orElseThrow();
+        });
+    }
+
     ProfessionalAccount account(long userId) {
         return professionals.findAccountByUserId(userId)
                 .orElseThrow(() -> new ForbiddenException("A professional profile is required"));

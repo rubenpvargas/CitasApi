@@ -53,6 +53,15 @@ public class ProfessionalAgendaController {
                 .map(a -> AgendaItemResponse.from(a, now)).toList();
     }
 
+    @PostMapping("/appointments/{id}/close")
+    AppointmentResponse close(@AuthenticationPrincipal Jwt jwt, @PathVariable long id, @Valid @RequestBody CloseRequest request) {
+        return AppointmentResponse.from(agenda.close(JwtSubject.userId(jwt), id,
+                com.fcv.citas.domain.model.AppointmentStatus.valueOf(request.outcome())), java.time.LocalDateTime.now(clock));
+    }
+
+    record CloseRequest(@NotBlank @jakarta.validation.constraints.Pattern(regexp = "COMPLETED|NO_SHOW") String outcome) {
+    }
+
     /** HU-023 — datos mínimos: solo el nombre del paciente (sin documento, email ni teléfono). */
     record AgendaItemResponse(long id,
                               @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") java.time.LocalDateTime startAt,

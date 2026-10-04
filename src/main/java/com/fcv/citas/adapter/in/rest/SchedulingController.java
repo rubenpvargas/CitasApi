@@ -29,8 +29,6 @@ public class SchedulingController {
 
 
 
-    @PostMapping("/professional/appointments/{id}/close") @PreAuthorize("hasRole('PROFESSIONAL')")
-    void close(@AuthenticationPrincipal Jwt jwt,@PathVariable long id,@Valid @RequestBody CloseRequest r){service.closeAppointment(userId(jwt),id,r.outcome());}
 
 
     @GetMapping("/admin/inbox") @PreAuthorize("hasRole('ADMIN')")
@@ -40,5 +38,4 @@ public class SchedulingController {
 
     private long userId(Jwt jwt){return Long.parseLong(jwt.getSubject());}
 
-    record CloseRequest(@NotBlank String outcome){}
 }
