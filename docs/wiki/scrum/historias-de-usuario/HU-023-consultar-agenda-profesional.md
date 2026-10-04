@@ -23,24 +23,29 @@ relacionadas: ["[[HU-024-cerrar-atencion]]"]
 ## Esfuerzo
 **Nivel:** Medio. **Justificación:** ownership, filtros y minimización de datos.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir datos mínimos y contrato de agenda**. Dificultad: Medio.
-- [ ] **T-02 — Aplicar filtros/ownership e índices de consulta**. Dificultad: Medio.
-- [ ] **T-03 — Renderizar agenda accesible por periodo/sede**. Dificultad: Medio.
-- [ ] **T-04 — Probar aislamiento y filtros**. Dificultad: Medio.
+- [x] **T-01 — Definir datos mínimos y contrato de agenda**. Dificultad: Medio.
+- [x] **T-02 — Aplicar filtros/ownership e índices de consulta**. Dificultad: Medio.
+- [x] **T-03 — Renderizar agenda accesible por periodo/sede**. Dificultad: Medio.
+- [x] **T-04 — Probar aislamiento y filtros**. Dificultad: Medio.
 ## Criterios de aceptación
 ### CA-01 — Agenda propia
 **Dado** PROFESSIONAL autenticado **cuando** filtra por día/semana y sede **entonces** ve sus citas APPROVED coincidentes.
 ### CA-02 — Privacidad
 **Dado** agenda de otro profesional o cita no propia **cuando** intenta acceder **entonces** no obtiene sus datos.
 ## Definition of Done
-- [ ] CA-01 y CA-02 validados con pruebas de ownership.
-- [ ] Contrato limita campos a lo necesario y UI maneja vacío/error/carga.
-- [ ] La agenda no incluye estados distintos de APPROVED salvo cambio aprobado de alcance.
+- [x] CA-01 y CA-02 validados con pruebas de ownership.
+- [x] Contrato limita campos a lo necesario y UI maneja vacío/error/carga.
+- [x] La agenda no incluye estados distintos de APPROVED salvo cambio aprobado de alcance.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01, CA-02 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `ProfessionalAgendaIT`, `ProfessionalAgendaServiceTest`: citas propias `APPROVED` por rango (≤31 días) y sede; E2E "la agenda semanal muestra citas aprobadas…" en verde | API `9ae3120`; web `0385e8e` |
+| CA-02 | Conforme | Solo agenda del profesional del token; campos `{id, startAt, endAt, locationCode, specialtyName, patientName, closable}` | Sin documento, email ni teléfono |
+| DoD | Conforme | Solo `APPROVED`; UI con carga/vacío/error (`agenda.spec`) | — |
+
 ## Historial de validación
 - 2026-09-17 — Creada en Pendiente de aprobación.
+- 2026-10-04 — Validada (API `9ae3120`; web `0385e8e`).
+
 ## Notas y decisiones
 - Esta HU es distinta del calendario de bloques HU-014.
