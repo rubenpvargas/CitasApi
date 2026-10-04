@@ -37,7 +37,6 @@ public class SchedulingService {
 
 
 
-    public List<Map<String,Object>> adminInbox(){List<Map<String,Object>>out=new ArrayList<>(jdbc.queryForList("SELECT 'APPOINTMENT' itemType,a.id,st.code status,a.scheduled_start_at startAt,s.name specialtyName,l.code locationCode,u.first_name patientFirstName,u.last_name patientLastName FROM appointments a JOIN appointment_statuses st ON st.id=a.status_id JOIN specialties s ON s.id=a.specialty_id JOIN locations l ON l.id=a.location_id JOIN users u ON u.id=a.patient_user_id WHERE st.code='REQUESTED' ORDER BY a.scheduled_start_at"));out.addAll(jdbc.queryForList("SELECT 'RESCHEDULE' itemType,rr.id,rs.code status,rr.requested_start_at startAt,s.name specialtyName,l.code locationCode,u.first_name patientFirstName,u.last_name patientLastName FROM reschedule_requests rr JOIN reschedule_request_statuses rs ON rs.id=rr.status_id JOIN appointments a ON a.id=rr.appointment_id JOIN specialties s ON s.id=a.specialty_id JOIN locations l ON l.id=rr.requested_location_id JOIN users u ON u.id=rr.requested_by_user_id WHERE rs.code='PENDING' ORDER BY rr.requested_start_at"));return out;}
 
     public List<Map<String,Object>> upcomingReminderAppointments(int hours) {
         int window = Math.max(1, Math.min(hours, 168));

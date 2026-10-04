@@ -1,5 +1,6 @@
 package com.fcv.citas.config;
 
+import com.fcv.citas.application.port.in.AdminInboxUseCase;
 import com.fcv.citas.application.port.in.AffiliationUseCase;
 import com.fcv.citas.application.port.in.AppointmentDecisionUseCase;
 import com.fcv.citas.application.port.in.AvailabilityBlockUseCase;
@@ -24,6 +25,7 @@ import com.fcv.citas.application.port.out.ProfessionalRepositoryPort;
 import com.fcv.citas.application.port.out.ProfileRepositoryPort;
 import com.fcv.citas.application.port.out.SpecialtyRepositoryPort;
 import com.fcv.citas.application.port.out.TransactionPort;
+import com.fcv.citas.application.service.AdminInboxService;
 import com.fcv.citas.application.service.AffiliationService;
 import com.fcv.citas.application.service.AppointmentDecisionService;
 import com.fcv.citas.application.service.AvailabilityBlockService;
@@ -118,5 +120,10 @@ public class AgendaUseCaseConfig {
                                                         ProfessionalRepositoryPort professionals,
                                                         TransactionPort transactions, Clock clock) {
         return new ProfessionalAgendaService(appointments, professionals, transactions, clock);
+    }
+
+    @Bean
+    AdminInboxUseCase adminInboxUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules) {
+        return new AdminInboxService(appointments, reschedules);
     }
 }

@@ -31,8 +31,6 @@ public class SchedulingController {
 
 
 
-    @GetMapping("/admin/inbox") @PreAuthorize("hasRole('ADMIN')")
-    List<Map<String,Object>> inbox(){return service.adminInbox();}
     @GetMapping("/admin/automation/appointments/reminders") @PreAuthorize("hasRole('ADMIN')")
     List<Map<String,Object>> reminderAppointments(@RequestParam(defaultValue = "24") int hours){return service.upcomingReminderAppointments(hours);}
 
