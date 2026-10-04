@@ -23,10 +23,10 @@ relacionadas: ["[[HU-018-decidir-solicitud-especializada]]", "[[HU-022-decidir-r
 ## Esfuerzo
 **Nivel:** Medio. **Justificación:** agrega dos clases de pendiente y cuatro filtros.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir respuesta unificada o vistas separadas de bandeja**. Dificultad: Medio.
-- [ ] **T-02 — Implementar consulta ADMIN, filtros e índices**. Dificultad: Medio.
-- [ ] **T-03 — Crear bandeja accesible y enlaces a decisión**. Dificultad: Medio.
-- [ ] **T-04 — Probar rol, filtros y exclusión de estados resueltos**. Dificultad: Medio.
+- [x] **T-01 — Definir respuesta unificada o vistas separadas de bandeja**. Dificultad: Medio.
+- [x] **T-02 — Implementar consulta ADMIN, filtros e índices**. Dificultad: Medio.
+- [x] **T-03 — Crear bandeja accesible y enlaces a decisión**. Dificultad: Medio.
+- [x] **T-04 — Probar rol, filtros y exclusión de estados resueltos**. Dificultad: Medio.
 ## Criterios de aceptación
 ### CA-01 — Pendientes visibles
 **Dado** ADMIN autenticado **cuando** abre bandeja **entonces** ve citas especializadas REQUESTED y reprogramaciones PENDING.
@@ -35,14 +35,20 @@ relacionadas: ["[[HU-018-decidir-solicitud-especializada]]", "[[HU-022-decidir-r
 ### CA-03 — Restricción
 **Dado** rol distinto de ADMIN **cuando** solicita la bandeja **entonces** el backend la deniega.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados con autorización y filtros.
-- [ ] UI maneja estados loading/vacío/error/éxito y dirige a HU-018/HU-022.
-- [ ] Consultas no incluyen solicitudes ya resueltas como pendientes.
+- [x] CA-01 a CA-03 validados con autorización y filtros.
+- [x] UI maneja estados loading/vacío/error/éxito y dirige a HU-018/HU-022.
+- [x] Consultas no incluyen solicitudes ya resueltas como pendientes.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `AdminInboxIT`, `AdminInboxServiceTest`: `{appointments: REQUESTED, reschedules: PENDING}` con franja actual y solicitada | API `6dc7a47`; web `576e351` |
+| CA-02 | Conforme | Filtros sede, profesional, especialidad y fechas (IT y `inbox-filters.spec`) | — |
+| CA-03 | Conforme | Otros roles → 403 | — |
+| DoD | Conforme | Nunca incluye resueltas; UI con estados y enlace a HU-018/HU-022; la bandeja queda vacía tras las decisiones del E2E | — |
+
 ## Historial de validación
 - 2026-09-17 — Creada en Pendiente de aprobación.
+- 2026-10-04 — Corregida (sin filtros) y validada (API `6dc7a47`; web `576e351`).
+
 ## Notas y decisiones
 - Las decisiones permanecen separadas para conservar HU pequeñas.
