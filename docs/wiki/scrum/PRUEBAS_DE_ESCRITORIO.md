@@ -78,3 +78,80 @@ de reprogramación en 08:30: solo devuelve `T09:00:00`.
 | 5 | 409 `INVALID_TRANSITION` | error en diálogo | `POST` → 409 y recarga | "ya no está en un estado…" | 409 INVALID_TRANSITION |
 | 6 | 404 (cita ajena) | error en diálogo | `POST` → 404 | "…no existe…" | 404 (cita ajena) |
 | 7 | 403 | error en diálogo, sin navegación | `POST` → 403 | "No tienes permisos…" | 403 en el cierre se muestra en el diálogo sin redirigir |
+
+## HU-016/017 — Transacción de reserva (`BookingSlots`)
+
+Día D; ahora = 10-05 10:00. Slots libres bloqueados `id@hora/bloque`.
+
+| Caso | Entrada | Traza | Salida | Prueba |
+|---|---|---|---|---|
+| bk1 | {11@08:00/b1, 12@08:30/b1}, inicio 08:00, 30 min | n=1; inicios ofertables 08:00, 08:30; coincide 08:00 | [11] | `BookingSlotsTest.bk1…` |
+| bk2 | mismos, 60 min | n=2; 08:30 = 08:00+30 ✓ | [11, 12] | `bk2…`, `BookingIT.hu017…` |
+| bk3 | {11@08:00}, 60 min (08:30 ocupado) | 1 libre, se necesitan 2 | [] → 409 `SLOT_UNAVAILABLE` | `bk3…` |
+| bk4 | {11@08:00/b1, 21@08:30/b2}, 60 min | agrupado por bloque: 1 y 1 | [] | `bk4…` |
+| bk5 | ahora = D 08:00, inicio 08:00 | 08:00 no es posterior a ahora | [] | `bk5…` |
+| bk6 | inicio 08:15 o perdedor de carrera (relectura vacía) | sin inicio ofertable | [] | `bk6…` |
+| carrera | dos hilos, misma franja | H1 bloquea, asigna y confirma; H2 espera el bloqueo, relee y ve `appointment_id` | un 201 y un 409; 1 fila | `BookingIT.concurrentBookings…` |
+
+## HU-020 — Cancelación (estado × tiempo × reprogramación)
+
+| Estado, inicio | Resultado | Prueba |
+|---|---|---|
+| REQUESTED +60 min / APPROVED +60 min | `CANCELLED` | `AppointmentCancelTest` |
+| APPROVED, empieza ahora | `INVALID_TRANSITION` | ídem |
+| REQUESTED, hace 30 min | `INVALID_TRANSITION` | ídem |
+| CANCELLED / REJECTED (futura) | `INVALID_TRANSITION` | ídem |
+| COMPLETED / NO_SHOW (pasada) | `INVALID_TRANSITION` | ídem |
+| APPROVED futura con reprogramación PENDING | `CANCELLED`; slot propio libre; solicitud `CANCELLED` (fuente SYSTEM); retención libre; evento `APPOINTMENT_CANCELLED` | `CancelAppointmentServiceTest.ca01`, `CancelAppointmentIT.ca01` |
+| Cita ajena | 404 | `CancelAppointmentIT.ca02…` |
+
+## HU-021/022 — Ciclo de vida de la reprogramación
+
+Tras la solicitud: S1 (original) ASIGNADO a la cita; S2 (nuevo) RETENIDO por la solicitud.
+
+| Acción | S1 | S2 | Cita | Prueba |
+|---|---|---|---|---|
+| Aprobar | LIBRE | ASIGNADO a la cita | adopta sede y horario de S2; solicitud APPROVED; historial ADMIN en ambas | `RescheduleDecisionServiceTest.rl1`, `RescheduleDecisionIT.ca01` |
+| Rechazar con motivo | sigue ASIGNADO | LIBRE | sin cambios; solicitud REJECTED con motivo | `rl2`, `RescheduleDecisionIT.ca02` |
+| Rechazar sin motivo | sigue ASIGNADO | sigue RETENIDO | 409 `REJECTION_REASON_REQUIRED` | `rl3` |
+| Segunda decisión | sin cambios | sin cambios | 409 `INVALID_TRANSITION` | `rl3`, `RescheduleDecisionIT.ca01` |
+| Dos solicitudes por la misma S2 | — | RETENIDO solo por la ganadora | un 201 y un 409 | `RescheduleRequestIT.concurrent…` |
+
+## HU-024 — Elegibilidad de cierre (`AppointmentCloseTest`, ahora = 10:00)
+
+| Estado | Inicio | Resultado pedido | Salida |
+|---|---|---|---|
+| APPROVED | hace 30 min | COMPLETED | COMPLETED |
+| APPROVED | ahora | NO_SHOW | NO_SHOW |
+| APPROVED | en 30 min | COMPLETED | `INVALID_TRANSITION` |
+| REQUESTED | hace 30 min | COMPLETED | `INVALID_TRANSITION` |
+| CANCELLED | hace 30 min | NO_SHOW | `INVALID_TRANSITION` |
+| COMPLETED | hace 30 min | NO_SHOW | `INVALID_TRANSITION` |
+| APPROVED | hace 30 min | CANCELLED (no permitido) | `INVALID_TRANSITION` (REST responde 400 antes) |
+
+## Ola G — Despachador del outbox (base 30 s, máximo 3 intentos, ahora T)
+
+| Caso | Intento | ¿Entregado? | Estado | `next_attempt_at` | Prueba |
+|---|---|---|---|---|---|
+| ob1 | 1 | sí (2xx) | SENT | — | `OutboxRetryPolicyTest.ob1` |
+| ob2 | 1 | no | PENDING | T+30 s | `ob2`; IT con base 2 s |
+| ob3 | 2 | no | PENDING | T+60 s | `ob3` |
+| ob4 | 3 | no | FAILED | — | `ob4`; IT 500×3 → FAILED sin cuarto envío |
+| ob5 | 3 | sí | SENT | — | `ob5` |
+| — | — | URL de webhook vacía | PENDING, sin envío | — | `OutboxDispatchServiceTest.disabled…` |
+
+Simulación 2026-10-04 (stack sin Docker): con el simulador de n8n detenido, la cancelación
+respondió 200 y el evento quedó `PENDING`/`IO_ERROR`; al reactivarlo pasó a `SENT` en el
+intento 2.
+
+## WF-001 — Ventana de recordatorios (`hours=H`, `windowMinutes=W`)
+
+Una cita `APPROVED` se incluye si `inicio ∈ [ahora + H − W, ahora + H)`; con disparo
+horario y `W=60` cada cita cae en una sola ejecución.
+
+| Ahora | Cita | H, W | ¿Incluida? | Evidencia |
+|---|---|---|---|---|
+| 10-04 11:05 | 10-05 08:30 APPROVED (faltan 20 h 24 min) | 21, 120 → [19 h, 21 h) | sí | simulación 2026-10-04: 1 ítem, nodo de validación arma 1 correo |
+| 10-04 11:05 | misma | 19, 60 → [18 h, 19 h) | no | simulación: `[]` |
+| — | CANCELLED / REJECTED | cualquiera | no | simulación: solo la `APPROVED` aparece; `AutomationRemindersIT` |
+| — | sin clave / clave errónea / clave en otra ruta / `hours=99` | — | 401 / 401 / 403 / 400 | simulación y `AutomationRemindersIT` |
