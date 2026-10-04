@@ -4,7 +4,7 @@ import com.fcv.citas.application.model.ReminderItem;
 
 import java.util.List;
 
-/** Citas aprobadas próximas para recordatorios automatizados. */
+/** WF-001 — citas APPROVED que empiezan en [ahora + hours − windowMinutes, ahora + hours). */
 public interface ReminderQueryUseCase {
-    List<ReminderItem> upcoming(int hours);
+    List<ReminderItem> upcoming(int hours, int windowMinutes);
 }

@@ -2,6 +2,8 @@ package com.fcv.citas.application.model;
 
 import java.time.LocalDateTime;
 
-/** Cita aprobada próxima para el recordatorio de la automatización (se reemplazará en la ola G). */
-public record ReminderItem(long id, LocalDateTime startAt, String status, String patientEmail) {
+/** WF-001 — datos mínimos de una cita APPROVED próxima para el recordatorio (sin documento, teléfono ni ids de usuario). */
+public record ReminderItem(long appointmentId, LocalDateTime startAt, LocalDateTime endAt, String locationName,
+                           String specialtyName, String professionalName, String recipientFirstName,
+                           String recipientEmail) {
 }

@@ -181,13 +181,21 @@ public class JdbcAppointmentAdapter implements AppointmentRepositoryPort {
         return jdbc.query(sql.toString(), ROW, args.toArray());
     }
 
+    /** Intervalo semiabierto [from, to) sobre el inicio de citas APPROVED. */
     @Override
     public List<ReminderItem> findApprovedStartingBetween(LocalDateTime from, LocalDateTime to) {
-        return jdbc.query("SELECT a.id, a.scheduled_start_at, st.code status, u.email FROM appointments a "
-                        + "JOIN appointment_statuses st ON st.id = a.status_id JOIN users u ON u.id = a.patient_user_id "
-                        + "WHERE st.code = 'APPROVED' AND a.scheduled_start_at BETWEEN ? AND ? ORDER BY a.scheduled_start_at",
+        return jdbc.query("SELECT a.id, a.scheduled_start_at, a.scheduled_end_at, l.name location_name, s.name specialty_name, "
+                        + "CONCAT(pu.first_name, ' ', pu.last_name) professional_name, u.first_name, u.email "
+                        + "FROM appointments a JOIN appointment_statuses st ON st.id = a.status_id "
+                        + "JOIN users u ON u.id = a.patient_user_id JOIN locations l ON l.id = a.location_id "
+                        + "JOIN specialties s ON s.id = a.specialty_id JOIN professionals p ON p.id = a.professional_id "
+                        + "JOIN users pu ON pu.id = p.user_id "
+                        + "WHERE st.code = 'APPROVED' AND a.scheduled_start_at >= ? AND a.scheduled_start_at < ? "
+                        + "ORDER BY a.scheduled_start_at, a.id",
                 (rs, n) -> new ReminderItem(rs.getLong("id"), rs.getObject("scheduled_start_at", LocalDateTime.class),
-                        rs.getString("status"), rs.getString("email")), from, to);
+                        rs.getObject("scheduled_end_at", LocalDateTime.class), rs.getString("location_name"),
+                        rs.getString("specialty_name"), rs.getString("professional_name"), rs.getString("first_name"),
+                        rs.getString("email")), from, to);
     }
 
     /** Rango inclusivo por fecha local sobre una columna DATETIME, apto para índice (sin DATE()). */

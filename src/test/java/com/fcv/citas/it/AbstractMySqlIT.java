@@ -33,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class AbstractMySqlIT {
     protected static final String ACCESS_SECRET = "it-access-" + UUID.randomUUID() + UUID.randomUUID();
     protected static final String REFRESH_SECRET = "it-refresh-" + UUID.randomUUID() + UUID.randomUUID();
+    protected static final String AUTOMATION_KEY = "it-automation-" + UUID.randomUUID();
     protected static final String STRONG_PASSWORD = "Sintetica2026";
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
     private static final String RUN = Long.toString(System.nanoTime(), 36);
@@ -52,6 +53,7 @@ public abstract class AbstractMySqlIT {
         registry.add("spring.flyway.clean-disabled", () -> "false");
         registry.add("app.security.access-secret", () -> ACCESS_SECRET);
         registry.add("app.security.refresh-secret", () -> REFRESH_SECRET);
+        registry.add("app.automation.api-key", () -> AUTOMATION_KEY);
     }
 
     private static String requiredEnv(String name) {

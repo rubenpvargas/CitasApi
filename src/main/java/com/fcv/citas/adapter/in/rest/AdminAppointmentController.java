@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fcv.citas.application.model.AdminInbox;
 import com.fcv.citas.application.model.InboxFilter;
 import com.fcv.citas.application.port.in.AdminInboxUseCase;
-import com.fcv.citas.application.port.in.ReminderQueryUseCase;
 import com.fcv.citas.application.port.in.AppointmentDecisionUseCase;
 import com.fcv.citas.application.port.in.RescheduleUseCase;
 import jakarta.validation.Valid;
@@ -34,12 +33,10 @@ public class AdminAppointmentController {
     private final AppointmentDecisionUseCase decisions;
     private final RescheduleUseCase reschedules;
     private final AdminInboxUseCase inbox;
-    private final ReminderQueryUseCase reminders;
     private final Clock clock;
 
     public AdminAppointmentController(AppointmentDecisionUseCase decisions, RescheduleUseCase reschedules,
-                                      AdminInboxUseCase inbox, ReminderQueryUseCase reminders, Clock clock) {
-        this.reminders = reminders;
+                                      AdminInboxUseCase inbox, Clock clock) {
         this.decisions = decisions;
         this.reschedules = reschedules;
         this.inbox = inbox;
@@ -78,17 +75,6 @@ public class AdminAppointmentController {
 
     private LocalDateTime wall(java.time.Instant instant) {
         return instant == null ? null : LocalDateTime.ofInstant(instant, clock.getZone());
-    }
-
-    /** Ruta heredada de recordatorios (ADMIN); la ola G la sustituye por /api/v1/automation/**. */
-    @GetMapping("/automation/appointments/reminders")
-    List<ReminderResponse> reminders(@RequestParam(defaultValue = "24") int hours) {
-        return reminders.upcoming(hours).stream()
-                .map(r -> new ReminderResponse(r.id(), r.startAt(), r.status(), r.patientEmail())).toList();
-    }
-
-    record ReminderResponse(long id, @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime startAt,
-                            String status, String patientEmail) {
     }
 
     record InboxResponse(List<InboxAppointment> appointments, List<InboxReschedule> reschedules) {
