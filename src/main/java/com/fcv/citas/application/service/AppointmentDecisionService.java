@@ -20,9 +20,11 @@ public final class AppointmentDecisionService implements AppointmentDecisionUseC
     private final SlotRepositoryPort slots;
     private final TransactionPort transactions;
     private final Clock clock;
+    private final StatusEventRecorder events;
 
     public AppointmentDecisionService(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
-                                      TransactionPort transactions, Clock clock) {
+                                      TransactionPort transactions, Clock clock, StatusEventRecorder events) {
+        this.events = events;
         this.appointments = appointments;
         this.slots = slots;
         this.transactions = transactions;
@@ -43,7 +45,10 @@ public final class AppointmentDecisionService implements AppointmentDecisionUseC
                 slots.releaseAppointment(appointmentId);
             }
             appointments.addHistory(appointmentId, target, adminUserId, "ADMIN", cleanReason, clock.instant());
-            return appointments.findById(appointmentId).orElseThrow();
+            Appointment after = appointments.findById(appointmentId).orElseThrow();
+            events.record(target == AppointmentStatus.APPROVED ? com.fcv.citas.domain.model.NotificationType.APPOINTMENT_APPROVED
+                    : com.fcv.citas.domain.model.NotificationType.APPOINTMENT_REJECTED, after, cleanReason);
+            return after;
         });
     }
 }

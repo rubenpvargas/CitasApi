@@ -1,10 +1,13 @@
 # citas-api
 
 Backend Spring Boot 3.5 / Java 21 del laboratorio sintético de agendamiento.
-La identidad (registro, login, refresh/logout y recuperación de contraseña)
-conserva puertos hexagonales; la vertical de agenda usa transacciones JDBC
-detrás de servicios de aplicación para serializar slots (deuda conocida, se
-refactoriza en olas posteriores).
+Arquitectura hexagonal completa: dominio puro (`domain`), casos de uso con
+puertos (`application`), adaptadores REST/seguridad/programación
+(`adapter/in`) y JDBC/JPA/HTTP (`adapter/out`). La reserva bloquea los slots
+con `SELECT … FOR UPDATE`; las reglas de agenda viven en el dominio
+(`BlockValidator`, `AvailabilityCalculator`, `BookingSlots`, `Appointment`).
+`HexagonalArchitectureTest` impide dependencias de framework en dominio y
+aplicación.
 
 ## Ejecución
 
@@ -30,6 +33,21 @@ La recuperación de contraseña solo devuelve `developmentToken` si
 `app.password-reset.expose-development-token`, por defecto `false`).
 
 Health: `GET /actuator/health`.
+
+## Automatizaciones (ola G)
+
+| Variable | Uso | Por defecto |
+|---|---|---|
+| `AUTOMATION_API_KEY` | Clave de n8n en la cabecera `X-Automation-Key` para `GET /api/v1/automation/appointments/reminders?hours=24&windowMinutes=60` (WF-001). Sin valor la ruta responde 401; la clave no sirve en otras rutas (403). | vacía |
+| `N8N_STATUS_WEBHOOK_URL` | Webhook de WF-002 al que el despachador del outbox envía los eventos de estado. Vacía = despacho desactivado (eventos `PENDING`). | vacía |
+| `N8N_WEBHOOK_SECRET` | Valor de la cabecera `X-Webhook-Secret` que WF-002 valida. | vacía |
+| `NOTIFICATION_DISPATCH_DELAY_MS` | Intervalo del despachador. | 10000 |
+| `NOTIFICATION_RETRY_BASE_SECONDS` | Base del backoff exponencial (3 intentos y luego `FAILED`). | 30 |
+| `APP_TIME_ZONE` | Zona de la hora local de pared de la agenda. | `America/Bogota` |
+
+Los eventos (`APPOINTMENT_APPROVED|REJECTED|CANCELLED`, `RESCHEDULE_APPROVED|REJECTED`)
+se escriben en `notification_outbox` en la misma transacción de la transición;
+un fallo del webhook nunca invalida la cita.
 
 ## Verificación
 

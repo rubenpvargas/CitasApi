@@ -1,6 +1,5 @@
 package com.fcv.citas.adapter.in.rest;
 
-import com.fcv.citas.application.exception.BusinessException;
 import com.fcv.citas.application.exception.BusinessRuleException;
 import com.fcv.citas.application.exception.ForbiddenException;
 import com.fcv.citas.application.exception.NotFoundException;
@@ -108,15 +107,6 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
-    void legacyBusinessExceptionKeepsSemanticStatusByCode() throws Exception {
-        mvc.perform(get("/probe/legacy").param("code", "NOT_FOUND")).andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-        mvc.perform(get("/probe/legacy").param("code", "FORBIDDEN")).andExpect(status().isForbidden());
-        mvc.perform(get("/probe/legacy").param("code", "PAST_BLOCK")).andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("PAST_BLOCK"));
-    }
-
-    @Test
     void unexpectedErrorIs500WithoutInternalDetails() throws Exception {
         mvc.perform(get("/probe/boom"))
                 .andExpect(status().isInternalServerError())
@@ -149,9 +139,6 @@ class ApiExceptionHandlerTest {
 
         @GetMapping("/probe/rule")
         void rule() { throw new BusinessRuleException("SLOT_UNAVAILABLE", "Slot taken"); }
-
-        @GetMapping("/probe/legacy")
-        void legacy(@RequestParam String code) { throw new BusinessException(code, "legacy"); }
 
         @GetMapping("/probe/boom")
         void boom() { throw new IllegalStateException("secret-internal-detail"); }

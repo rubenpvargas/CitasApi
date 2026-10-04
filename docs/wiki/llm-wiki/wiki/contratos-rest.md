@@ -395,3 +395,18 @@ Backend `398268a`, `5e70722`, `c00ac79`, `1588ed5`, `581ffa8` (V9:
   inexistente → 404.
 - Cancelación y decisión ADMIN → `200 AppointmentDto`.
 - `GET /appointments`: `status` inválido o rango invertido → 400 (sin tope de 31 días).
+
+## VALIDACIÓN — Olas E/F/G (2026-10-04)
+
+Backend `1f0b78b`, `9ae3120`, `b8fb954`, `6dc7a47`, `57f737d`, `de4ce20`, `c76ddad`.
+Precisiones (HECHO):
+- Decisión de reprogramación y cierre → `200 AppointmentDto`; resultado de cierre inválido →
+  400; aprobar una reprogramación cuya cita ya no está `APPROVED` → 409 `INVALID_TRANSITION`.
+- Bandeja: ítems con `professionalId` y `specialtyId`; en reprogramaciones `locationCode` es
+  la sede solicitada; filtros de fecha sobre `startAt`/`requestedStartAt`; rango invertido → 400.
+- Agenda: PROFESSIONAL sin perfil profesional → 403.
+- Recordatorios: "ahora" truncado a minutos; `hours`/`windowMinutes` fuera de rango → 400;
+  clave ausente o errónea → `401 UNAUTHORIZED`.
+- Outbox: `correlationId = appointment-{id}`; `occurredAt` y `startAt` hora local sin offset;
+  cabecera adicional `X-Event-Id`; errores `HTTP_<status>|TIMEOUT|IO_ERROR|INVALID_URL|INTERRUPTED`.
+- E2E Playwright 9/9 contra stack simulado confirma el contrato de extremo a extremo.

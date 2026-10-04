@@ -41,6 +41,22 @@ public record Appointment(long id, long patientUserId, String patientName, long 
         return (status == AppointmentStatus.REQUESTED || status == AppointmentStatus.APPROVED) && startAt.isAfter(now);
     }
 
+    /** HU-024 — "aplicable": APPROVED cuyo inicio ya llegó (startAt ≤ ahora). */
+    public boolean closableAt(LocalDateTime now) {
+        return status == AppointmentStatus.APPROVED && !startAt.isAfter(now);
+    }
+
+    /** HU-024 — cierra una cita aplicable como COMPLETED o NO_SHOW; si no, INVALID_TRANSITION. */
+    public AppointmentStatus closeTo(AppointmentStatus outcome, LocalDateTime now) {
+        if (outcome != AppointmentStatus.COMPLETED && outcome != AppointmentStatus.NO_SHOW) {
+            throw invalidTransition("The outcome must be COMPLETED or NO_SHOW");
+        }
+        if (!closableAt(now)) {
+            throw invalidTransition("Only approved appointments that already started can be closed");
+        }
+        return outcome;
+    }
+
     /** HU-020 — fuera de REQUESTED|APPROVED o si ya comenzó → INVALID_TRANSITION (no hay reactivación). */
     public void requireCancellable(LocalDateTime now) {
         if (!cancellableAt(now)) {

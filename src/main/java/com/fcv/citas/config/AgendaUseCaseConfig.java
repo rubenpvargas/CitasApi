@@ -1,5 +1,6 @@
 package com.fcv.citas.config;
 
+import com.fcv.citas.application.port.in.AdminInboxUseCase;
 import com.fcv.citas.application.port.in.AffiliationUseCase;
 import com.fcv.citas.application.port.in.AppointmentDecisionUseCase;
 import com.fcv.citas.application.port.in.AvailabilityBlockUseCase;
@@ -8,7 +9,9 @@ import com.fcv.citas.application.port.in.BookingUseCase;
 import com.fcv.citas.application.port.in.MyAppointmentsUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
+import com.fcv.citas.application.port.in.ProfessionalAgendaUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
+import com.fcv.citas.application.port.in.ReminderQueryUseCase;
 import com.fcv.citas.application.port.in.RescheduleUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
 import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
@@ -23,6 +26,7 @@ import com.fcv.citas.application.port.out.ProfessionalRepositoryPort;
 import com.fcv.citas.application.port.out.ProfileRepositoryPort;
 import com.fcv.citas.application.port.out.SpecialtyRepositoryPort;
 import com.fcv.citas.application.port.out.TransactionPort;
+import com.fcv.citas.application.service.AdminInboxService;
 import com.fcv.citas.application.service.AffiliationService;
 import com.fcv.citas.application.service.AppointmentDecisionService;
 import com.fcv.citas.application.service.AvailabilityBlockService;
@@ -31,7 +35,9 @@ import com.fcv.citas.application.service.BookingService;
 import com.fcv.citas.application.service.MyAppointmentsService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
+import com.fcv.citas.application.service.ProfessionalAgendaService;
 import com.fcv.citas.application.service.ProfileService;
+import com.fcv.citas.application.service.ReminderQueryService;
 import com.fcv.citas.application.service.RescheduleService;
 import com.fcv.citas.application.service.SpecialtyService;
 import org.springframework.context.annotation.Bean;
@@ -93,21 +99,41 @@ public class AgendaUseCaseConfig {
 
     @Bean
     AppointmentDecisionUseCase appointmentDecisionUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
-                                                          TransactionPort transactions, Clock clock) {
-        return new AppointmentDecisionService(appointments, slots, transactions, clock);
+                                                          TransactionPort transactions, Clock clock,
+                                                          com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new AppointmentDecisionService(appointments, slots, transactions, clock, events);
     }
 
     @Bean
     MyAppointmentsUseCase myAppointmentsUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
                                                 RescheduleRepositoryPort reschedules, TransactionPort transactions,
-                                                Clock clock) {
-        return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock);
+                                                Clock clock,
+                                                com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock, events);
     }
 
     @Bean
     RescheduleUseCase rescheduleUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules,
                                         SlotRepositoryPort slots, ProfessionalRepositoryPort professionals,
-                                        SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock) {
-        return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock);
+                                        SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock,
+                                        com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock, events);
+    }
+
+    @Bean
+    ProfessionalAgendaUseCase professionalAgendaUseCase(AppointmentRepositoryPort appointments,
+                                                        ProfessionalRepositoryPort professionals,
+                                                        TransactionPort transactions, Clock clock) {
+        return new ProfessionalAgendaService(appointments, professionals, transactions, clock);
+    }
+
+    @Bean
+    AdminInboxUseCase adminInboxUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules) {
+        return new AdminInboxService(appointments, reschedules);
+    }
+
+    @Bean
+    ReminderQueryUseCase reminderQueryUseCase(AppointmentRepositoryPort appointments, Clock clock) {
+        return new ReminderQueryService(appointments, clock);
     }
 }

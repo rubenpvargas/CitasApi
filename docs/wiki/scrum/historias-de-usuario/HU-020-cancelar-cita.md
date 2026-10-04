@@ -23,10 +23,10 @@ relacionadas: ["[[HU-021-solicitar-reprogramacion]]"]
 ## Esfuerzo
 **Nivel:** Medio. **Justificación:** transición y recursos de agenda.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir estados cancelables y contrato**. Dificultad: Medio.
-- [ ] **T-02 — Aplicar transición, liberación y auditoría atómica**. Dificultad: Alto.
-- [ ] **T-03 — Integrar confirmación de cancelación UI**. Dificultad: Bajo.
-- [ ] **T-04 — Probar propia/ajena, pasado, terminal y reintento**. Dificultad: Medio.
+- [x] **T-01 — Definir estados cancelables y contrato**. Dificultad: Medio.
+- [x] **T-02 — Aplicar transición, liberación y auditoría atómica**. Dificultad: Alto.
+- [x] **T-03 — Integrar confirmación de cancelación UI**. Dificultad: Bajo.
+- [x] **T-04 — Probar propia/ajena, pasado, terminal y reintento**. Dificultad: Medio.
 ## Criterios de aceptación
 ### CA-01 — Cancelación válida
 **Dado** cita propia futura no terminal **cuando** USER la cancela **entonces** queda `CANCELLED`, libera slots y registra historial.
@@ -35,14 +35,20 @@ relacionadas: ["[[HU-021-solicitar-reprogramacion]]"]
 ### CA-03 — Sin reactivación
 **Dado** cita `CANCELLED` **cuando** se intenta reactivar directamente **entonces** el sistema la deniega.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados con transacción y auditoría.
-- [ ] Disponibilidad posterior refleja liberación sin doble reserva.
-- [ ] UI muestra resultado y restringe acciones según respuesta autorizada.
+- [x] CA-01 a CA-03 validados con transacción y auditoría.
+- [x] Disponibilidad posterior refleja liberación sin doble reserva.
+- [x] UI muestra resultado y restringe acciones según respuesta autorizada.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `CancelAppointmentIT`, `AppointmentCancelTest`: propia futura no terminal → `CANCELLED`, slots liberados, historial; cierra reprogramación pendiente (fuente `SYSTEM`) y libera su retención | API `1588ed5` (V9); web `6e727b0` |
+| CA-02 | Conforme | Ajena → 404; pasada o terminal → 409 `INVALID_TRANSITION` (tabla de escritorio estado × tiempo) | — |
+| CA-03 | Conforme | No existe ruta de reactivación | — |
+| DoD | Conforme | Disponibilidad posterior refleja la liberación; E2E reservar → cancelar en verde; simulación con n8n caído: cancelación 200 y evento reintentado hasta `SENT` | Diálogo accesible en lugar de `confirm()` |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
+- 2026-10-04 — Validada con IT, prueba de escritorio, E2E y simulación de fallo de n8n (API `1588ed5`; web `6e727b0`).
+
 ## Notas y decisiones
 - Cancelar tras rechazo de reprogramación se aborda en HU-022.

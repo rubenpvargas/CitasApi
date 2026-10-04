@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fcv.citas.application.model.BlockCommand;
 import com.fcv.citas.application.model.CalendarEntry;
 import com.fcv.citas.application.port.in.AvailabilityBlockUseCase;
+import com.fcv.citas.application.port.in.ProfessionalAgendaUseCase;
 import com.fcv.citas.domain.model.AvailabilityBlock;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -34,9 +35,42 @@ import java.util.List;
 @PreAuthorize("hasRole('PROFESSIONAL')")
 public class ProfessionalAgendaController {
     private final AvailabilityBlockUseCase blocks;
+    private final ProfessionalAgendaUseCase agenda;
+    private final java.time.Clock clock;
 
-    public ProfessionalAgendaController(AvailabilityBlockUseCase blocks) {
+    public ProfessionalAgendaController(AvailabilityBlockUseCase blocks, ProfessionalAgendaUseCase agenda,
+                                        java.time.Clock clock) {
         this.blocks = blocks;
+        this.agenda = agenda;
+        this.clock = clock;
+    }
+
+    @GetMapping("/agenda")
+    List<AgendaItemResponse> agenda(@AuthenticationPrincipal Jwt jwt, @RequestParam LocalDate from,
+                                    @RequestParam LocalDate to, @RequestParam(required = false) String locationCode) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now(clock);
+        return agenda.agenda(JwtSubject.userId(jwt), from, to, locationCode).stream()
+                .map(a -> AgendaItemResponse.from(a, now)).toList();
+    }
+
+    @PostMapping("/appointments/{id}/close")
+    AppointmentResponse close(@AuthenticationPrincipal Jwt jwt, @PathVariable long id, @Valid @RequestBody CloseRequest request) {
+        return AppointmentResponse.from(agenda.close(JwtSubject.userId(jwt), id,
+                com.fcv.citas.domain.model.AppointmentStatus.valueOf(request.outcome())), java.time.LocalDateTime.now(clock));
+    }
+
+    record CloseRequest(@NotBlank @jakarta.validation.constraints.Pattern(regexp = "COMPLETED|NO_SHOW") String outcome) {
+    }
+
+    /** HU-023 — datos mínimos: solo el nombre del paciente (sin documento, email ni teléfono). */
+    record AgendaItemResponse(long id,
+                              @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") java.time.LocalDateTime startAt,
+                              @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") java.time.LocalDateTime endAt,
+                              String locationCode, String specialtyName, String patientName, boolean closable) {
+        static AgendaItemResponse from(com.fcv.citas.domain.model.Appointment a, java.time.LocalDateTime now) {
+            return new AgendaItemResponse(a.id(), a.startAt(), a.endAt(), a.locationCode(), a.specialtyName(),
+                    a.patientName(), a.closableAt(now));
+        }
     }
 
     @PostMapping("/blocks")

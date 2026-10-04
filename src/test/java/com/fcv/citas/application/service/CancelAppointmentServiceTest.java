@@ -30,8 +30,9 @@ class CancelAppointmentServiceTest {
     final MyAppointmentsServiceTest.InMemoryAppointments appointments = new RecordingAppointments();
     final RecordingSlots slots = new RecordingSlots();
     final RecordingReschedules reschedules = new RecordingReschedules();
+    final List<com.fcv.citas.domain.model.NotificationType> events = new ArrayList<>();
     final MyAppointmentsService service = new MyAppointmentsService(appointments, slots, reschedules,
-            new DirectTransactions(), CLOCK);
+            new DirectTransactions(), CLOCK, (type, appointment, reason) -> events.add(type));
     static final LocalDateTime FUTURE = TODAY.plusDays(2).atTime(8, 0);
 
     @Test
@@ -48,6 +49,7 @@ class CancelAppointmentServiceTest {
         assertThat(slots.releasedHolds).containsExactly(9L);
         assertThat(reschedules.statuses).containsExactly(RescheduleStatus.CANCELLED);
         assertThat(reschedules.sources).containsExactly("SYSTEM");
+        assertThat(events).containsExactly(com.fcv.citas.domain.model.NotificationType.APPOINTMENT_CANCELLED);
     }
 
     @Test
@@ -61,6 +63,7 @@ class CancelAppointmentServiceTest {
         assertThatThrownBy(() -> service.cancel(7L, 3L)).isInstanceOf(DomainRuleViolation.class)
                 .extracting("code").isEqualTo("INVALID_TRANSITION");
         assertThat(((RecordingAppointments) appointments).statuses).isEmpty();
+        assertThat(events).isEmpty();
         assertThat(slots.releasedAppointments).isEmpty();
     }
 
@@ -75,7 +78,7 @@ class CancelAppointmentServiceTest {
         }
     }
 
-    static final class RecordingSlots implements SlotRepositoryPort {
+    static class RecordingSlots implements SlotRepositoryPort {
         final List<Long> releasedAppointments = new ArrayList<>();
         final List<Long> releasedHolds = new ArrayList<>();
         @Override public List<LockedSlot> lockFreeSlots(long p, long l, LocalDateTime from, LocalDateTime to) { return List.of(); }

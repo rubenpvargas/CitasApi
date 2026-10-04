@@ -23,10 +23,10 @@ relacionadas: ["[[HU-020-cancelar-cita]]", "[[HU-021-solicitar-reprogramacion]]"
 ## Esfuerzo
 **Nivel:** Medio. **Justificación:** filtros, detalle y ownership.
 ## Tareas de desarrollo
-- [ ] **T-01 — Definir consulta, filtros y detalle mínimo**. Dificultad: Medio.
-- [ ] **T-02 — Aplicar ownership e índices de consulta**. Dificultad: Medio.
-- [ ] **T-03 — Crear listado/detalle accesible**. Dificultad: Medio.
-- [ ] **T-04 — Probar filtros, vacío y acceso ajeno**. Dificultad: Medio.
+- [x] **T-01 — Definir consulta, filtros y detalle mínimo**. Dificultad: Medio.
+- [x] **T-02 — Aplicar ownership e índices de consulta**. Dificultad: Medio.
+- [x] **T-03 — Crear listado/detalle accesible**. Dificultad: Medio.
+- [x] **T-04 — Probar filtros, vacío y acceso ajeno**. Dificultad: Medio.
 ## Criterios de aceptación
 ### CA-01 — Información mínima
 **Dado** USER con citas **cuando** consulta **entonces** ve los campos mínimos exigidos, incluido motivo de rechazo si existe.
@@ -35,14 +35,20 @@ relacionadas: ["[[HU-020-cancelar-cita]]", "[[HU-021-solicitar-reprogramacion]]"
 ### CA-03 — Ownership
 **Dado** intento de detalle de otra cuenta **cuando** se procesa **entonces** el backend lo deniega.
 ## Definition of Done
-- [ ] CA-01 a CA-03 validados con pruebas de ownership y filtros.
-- [ ] UI tiene loading, vacío, error, éxito y navegación accesible.
-- [ ] Respuesta no replica nombres de catálogo innecesariamente en persistencia.
+- [x] CA-01 a CA-03 validados con pruebas de ownership y filtros.
+- [x] UI tiene loading, vacío, error, éxito y navegación accesible.
+- [x] Respuesta no replica nombres de catálogo innecesariamente en persistencia.
 ## Evidencia de validación
 | Elemento | Resultado | Evidencia | Observación |
 |---|---|---|---|
-| CA-01..CA-03 / DoD | Pendiente | — | — |
+| CA-01 | Conforme | `AppointmentDto` con sede, profesional, especialidad, fecha, duración, estado y `rejectionReason` desde historial (IT; E2E muestra el motivo) | API `c00ac79`; web `9bfc827` |
+| CA-02 | Conforme | Filtros `status`, `from`, `to` (IT); inválidos → 400 | — |
+| CA-03 | Conforme | `GET /appointments/{id}` ajena → 404 | — |
+| DoD UI | Conforme | Estados carga/vacío/error/éxito y etiquetas correctas por estado (`appointments.spec`); dashboard sin el antiguo "Atendida" por defecto (`b1a5da4`) | Nombres por join, sin duplicar catálogos |
+
 ## Historial de validación
 - 2026-09-17 — Creada en `Pendiente de aprobación`.
+- 2026-10-04 — Corregida (sin motivo de rechazo, estados mal etiquetados) y validada (API `c00ac79`; web `9bfc827`).
+
 ## Notas y decisiones
 - Acciones se habilitan según el estado devuelto por backend.
