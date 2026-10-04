@@ -8,6 +8,7 @@ import com.fcv.citas.application.port.in.BookingUseCase;
 import com.fcv.citas.application.port.in.MyAppointmentsUseCase;
 import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
+import com.fcv.citas.application.port.in.ProfessionalAgendaUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
 import com.fcv.citas.application.port.in.RescheduleUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
@@ -31,6 +32,7 @@ import com.fcv.citas.application.service.BookingService;
 import com.fcv.citas.application.service.MyAppointmentsService;
 import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
+import com.fcv.citas.application.service.ProfessionalAgendaService;
 import com.fcv.citas.application.service.ProfileService;
 import com.fcv.citas.application.service.RescheduleService;
 import com.fcv.citas.application.service.SpecialtyService;
@@ -109,5 +111,12 @@ public class AgendaUseCaseConfig {
                                         SlotRepositoryPort slots, ProfessionalRepositoryPort professionals,
                                         SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock) {
         return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock);
+    }
+
+    @Bean
+    ProfessionalAgendaUseCase professionalAgendaUseCase(AppointmentRepositoryPort appointments,
+                                                        ProfessionalRepositoryPort professionals,
+                                                        TransactionPort transactions, Clock clock) {
+        return new ProfessionalAgendaService(appointments, professionals, transactions, clock);
     }
 }
