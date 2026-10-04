@@ -11,6 +11,7 @@ import com.fcv.citas.application.port.in.InsuranceCatalogUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAdminUseCase;
 import com.fcv.citas.application.port.in.ProfessionalAgendaUseCase;
 import com.fcv.citas.application.port.in.ProfileUseCase;
+import com.fcv.citas.application.port.in.ReminderQueryUseCase;
 import com.fcv.citas.application.port.in.RescheduleUseCase;
 import com.fcv.citas.application.port.in.SpecialtyUseCase;
 import com.fcv.citas.application.port.out.AffiliationRepositoryPort;
@@ -36,6 +37,7 @@ import com.fcv.citas.application.service.InsuranceCatalogService;
 import com.fcv.citas.application.service.ProfessionalAdminService;
 import com.fcv.citas.application.service.ProfessionalAgendaService;
 import com.fcv.citas.application.service.ProfileService;
+import com.fcv.citas.application.service.ReminderQueryService;
 import com.fcv.citas.application.service.RescheduleService;
 import com.fcv.citas.application.service.SpecialtyService;
 import org.springframework.context.annotation.Bean;
@@ -125,5 +127,10 @@ public class AgendaUseCaseConfig {
     @Bean
     AdminInboxUseCase adminInboxUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules) {
         return new AdminInboxService(appointments, reschedules);
+    }
+
+    @Bean
+    ReminderQueryUseCase reminderQueryUseCase(AppointmentRepositoryPort appointments, Clock clock) {
+        return new ReminderQueryService(appointments, clock);
     }
 }

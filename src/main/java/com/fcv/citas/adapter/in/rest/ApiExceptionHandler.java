@@ -1,6 +1,5 @@
 package com.fcv.citas.adapter.in.rest;
 
-import com.fcv.citas.application.exception.BusinessException;
 import com.fcv.citas.application.exception.BusinessRuleException;
 import com.fcv.citas.application.exception.DuplicateIdentifierException;
 import com.fcv.citas.application.exception.ForbiddenException;
@@ -65,16 +64,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BusinessRuleException.class)
     ResponseEntity<Object> businessRule(BusinessRuleException exception) {
         return problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
-    }
-
-    /** Excepción heredada de la vertical de agenda; se refactorizará en olas posteriores. */
-    @ExceptionHandler(BusinessException.class)
-    ResponseEntity<Object> business(BusinessException exception) {
-        return switch (exception.code()) {
-            case "NOT_FOUND" -> problem(HttpStatus.NOT_FOUND, "NOT_FOUND", "The requested resource was not found");
-            case "FORBIDDEN" -> forbidden();
-            default -> problem(HttpStatus.CONFLICT, exception.code(), exception.getMessage());
-        };
     }
 
     @ExceptionHandler(RequestValidationException.class)
