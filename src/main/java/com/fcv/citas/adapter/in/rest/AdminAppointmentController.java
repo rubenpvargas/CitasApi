@@ -1,6 +1,7 @@
 package com.fcv.citas.adapter.in.rest;
 
 import com.fcv.citas.application.port.in.AppointmentDecisionUseCase;
+import com.fcv.citas.application.port.in.RescheduleUseCase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,10 +23,12 @@ import java.time.LocalDateTime;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminAppointmentController {
     private final AppointmentDecisionUseCase decisions;
+    private final RescheduleUseCase reschedules;
     private final Clock clock;
 
-    public AdminAppointmentController(AppointmentDecisionUseCase decisions, Clock clock) {
+    public AdminAppointmentController(AppointmentDecisionUseCase decisions, RescheduleUseCase reschedules, Clock clock) {
         this.decisions = decisions;
+        this.reschedules = reschedules;
         this.clock = clock;
     }
 
@@ -33,6 +36,13 @@ public class AdminAppointmentController {
     AppointmentResponse decide(@AuthenticationPrincipal Jwt jwt, @PathVariable long id,
                                @Valid @RequestBody DecisionRequest request) {
         return AppointmentResponse.from(decisions.decide(JwtSubject.userId(jwt), id, request.approve(), request.reason()),
+                LocalDateTime.now(clock));
+    }
+
+    @PostMapping("/reschedules/{id}/decision")
+    AppointmentResponse decideReschedule(@AuthenticationPrincipal Jwt jwt, @PathVariable long id,
+                                         @Valid @RequestBody DecisionRequest request) {
+        return AppointmentResponse.from(reschedules.decide(JwtSubject.userId(jwt), id, request.approve(), request.reason()),
                 LocalDateTime.now(clock));
     }
 

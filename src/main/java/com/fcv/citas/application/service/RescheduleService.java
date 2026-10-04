@@ -15,6 +15,7 @@ import com.fcv.citas.domain.model.BookingSlots;
 import com.fcv.citas.domain.model.Location;
 import com.fcv.citas.domain.model.ProfessionalSummary;
 import com.fcv.citas.domain.model.RescheduleRequest;
+import com.fcv.citas.domain.model.RescheduleStatus;
 import com.fcv.citas.domain.model.Specialty;
 
 import java.time.Clock;
@@ -81,8 +82,36 @@ public final class RescheduleService implements RescheduleUseCase {
         });
     }
 
+    /**
+     * HU-022 — bloquea solicitud y cita. Aprobar: se liberan los slots antiguos, los retenidos pasan a la
+     * cita y ésta adopta la nueva franja/sede. Rechazar (con motivo): se libera la retención y la cita
+     * conserva su franja. Historial ADMIN en la solicitud y, al aprobar, también en la cita.
+     */
     @Override
     public Appointment decide(long adminUserId, long requestId, boolean approve, String reason) {
-        throw new UnsupportedOperationException("HU-022 pending");
+        return transactions.required(() -> {
+            RescheduleRequest request = reschedules.lockById(requestId)
+                    .orElseThrow(() -> new NotFoundException("Reschedule request not found"));
+            RescheduleStatus target = request.decide(approve, reason);
+            Appointment appointment = appointments.lockById(request.appointmentId()).orElseThrow();
+            String cleanReason = reason == null || reason.isBlank() ? null : reason.trim();
+            if (target == RescheduleStatus.APPROVED) {
+                if (appointment.status() != com.fcv.citas.domain.model.AppointmentStatus.APPROVED) {
+                    throw new com.fcv.citas.domain.model.DomainRuleViolation("INVALID_TRANSITION",
+                            "The appointment is no longer approved");
+                }
+                slots.releaseAppointment(appointment.id());
+                slots.transferHoldToAppointment(requestId, appointment.id());
+                appointments.moveTo(appointment.id(), request.requestedLocationId(), request.requestedStartAt(),
+                        request.requestedEndAt(), clock.instant());
+                appointments.addHistory(appointment.id(), com.fcv.citas.domain.model.AppointmentStatus.APPROVED,
+                        adminUserId, "ADMIN", "Reschedule approved", clock.instant());
+            } else {
+                slots.releaseHold(requestId);
+            }
+            reschedules.updateStatus(requestId, target, adminUserId, cleanReason, LocalDateTime.now(clock));
+            reschedules.addHistory(requestId, target, adminUserId, "ADMIN", cleanReason, clock.instant());
+            return appointments.findById(appointment.id()).orElseThrow();
+        });
     }
 }

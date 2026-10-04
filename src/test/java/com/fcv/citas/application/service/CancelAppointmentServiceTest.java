@@ -75,7 +75,7 @@ class CancelAppointmentServiceTest {
         }
     }
 
-    static final class RecordingSlots implements SlotRepositoryPort {
+    static class RecordingSlots implements SlotRepositoryPort {
         final List<Long> releasedAppointments = new ArrayList<>();
         final List<Long> releasedHolds = new ArrayList<>();
         @Override public List<LockedSlot> lockFreeSlots(long p, long l, LocalDateTime from, LocalDateTime to) { return List.of(); }
