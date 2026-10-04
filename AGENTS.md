@@ -2,13 +2,13 @@
 
 ## Estado verificado del repositorio
 
-Verificado el 2026-10-03 (olas A, B y C: HU-001 a HU-015):
+Verificado el 2026-10-04 (olas A–G: HU-001 a HU-025, WF-001, WF-002):
 
 - Proyecto Spring Boot 3.5.16 / Java 21 / Maven (`pom.xml`, paquete raíz
   `com.fcv.citas`): `domain`, `application` (casos de uso, puertos `in`/`out`,
-  excepciones), `adapter/in/rest`, `adapter/out/persistence`,
-  `adapter/out/security` y `config`.
-- Migraciones Flyway `V1`..`V8` en `src/main/resources/db/migration`; V5 siembra
+  excepciones), `adapter/in/{rest,security,scheduling}`,
+  `adapter/out/{persistence,security,notification}` y `config`.
+- Migraciones Flyway `V1`..`V10` en `src/main/resources/db/migration`; V5 siembra
   cuentas y oferta demo sintéticas (`*@demo.invalid`).
 - Errores REST: Problem Details con `code` estable (`ApiExceptionHandler`):
   400 `VALIDATION_ERROR`/`INVALID_REQUEST`, 401, 403 `FORBIDDEN`, 404
@@ -23,16 +23,19 @@ Verificado el 2026-10-03 (olas A, B y C: HU-001 a HU-015):
 - Tiempo: `Clock` inyectable con zona `app.time-zone` (por defecto
   `America/Bogota`); la agenda se persiste como hora local de pared enlazando
   `LocalDate`/`LocalTime`/`LocalDateTime` (nunca `Timestamp.valueOf`).
-- Hexagonal: identidad, perfil, EPS/planes, especialidades, afiliación,
-  profesionales, bloques, calendario y disponibilidad tienen casos de uso en
-  `application/service`, puertos `out` y adaptadores JDBC en
-  `adapter/out/persistence`; reglas puras en `domain/model` (`BlockValidator`,
-  `BlockSchedule`, `AvailabilityCalculator`, `DateRange`).
-- Deuda conocida: `SchedulingService`/`SchedulingController` conservan las
-  olas D–F (reserva, mis citas, cancelación, decisiones ADMIN,
-  reprogramación, agenda y cierre profesional, inbox y recordatorios) con
-  `JdbcTemplate`, `Map<String,Object>` y `BusinessException`; se refactorizan
-  en esas olas.
+- Hexagonal completo: todos los casos de uso viven en `application/service` con
+  puertos `in`/`out`; SQL solo en `adapter/out/persistence`; reglas puras en
+  `domain/model` (`BlockValidator`, `BlockSchedule`, `AvailabilityCalculator`,
+  `BookingSlots`, `Appointment`, `RescheduleRequest`, `OutboxRetryPolicy`,
+  `DateRange`). `HexagonalArchitectureTest` falla si `application` importa
+  Spring/JDBC/JPA, si `domain` importa frameworks o si REST devuelve
+  `Map<String,Object>`.
+- Ola G: credencial `X-Automation-Key` (`AUTOMATION_API_KEY`, rol AUTOMATION solo
+  en `/api/v1/automation/**`) y outbox transaccional `notification_outbox` con
+  despachador programado hacia `N8N_STATUS_WEBHOOK_URL` (`X-Webhook-Secret`).
+- Sin deuda hexagonal conocida: `SchedulingService`/`SchedulingController` y
+  `BusinessException` fueron eliminados. Pendiente fuera de código: E2E con
+  Docker (no disponible en esta máquina).
 ## Alcance de este repositorio
 
 Implementar únicamente el backend del sistema de citas: Java 21, Spring Boot
