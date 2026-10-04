@@ -27,6 +27,15 @@ app:
     refresh-days: ${JWT_REFRESH_DAYS:7}
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  notifications:
+    # WF-002: URL del webhook de n8n (vacía = despacho desactivado; los eventos quedan PENDING).
+    webhook-url: ${N8N_STATUS_WEBHOOK_URL:}
+    webhook-secret: ${N8N_WEBHOOK_SECRET:}
+    dispatch-delay-ms: ${NOTIFICATION_DISPATCH_DELAY_MS:10000}
+    retry-base-seconds: ${NOTIFICATION_RETRY_BASE_SECONDS:30}
+    max-attempts: 3
+    batch-size: 20
+    scheduler-enabled: true
   automation:
     # Clave de n8n para /api/v1/automation/** (cabecera X-Automation-Key). Vacía = ruta cerrada (401).
     api-key: ${AUTOMATION_API_KEY:}

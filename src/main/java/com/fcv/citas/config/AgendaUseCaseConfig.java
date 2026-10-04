@@ -99,22 +99,25 @@ public class AgendaUseCaseConfig {
 
     @Bean
     AppointmentDecisionUseCase appointmentDecisionUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
-                                                          TransactionPort transactions, Clock clock) {
-        return new AppointmentDecisionService(appointments, slots, transactions, clock);
+                                                          TransactionPort transactions, Clock clock,
+                                                          com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new AppointmentDecisionService(appointments, slots, transactions, clock, events);
     }
 
     @Bean
     MyAppointmentsUseCase myAppointmentsUseCase(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
                                                 RescheduleRepositoryPort reschedules, TransactionPort transactions,
-                                                Clock clock) {
-        return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock);
+                                                Clock clock,
+                                                com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new MyAppointmentsService(appointments, slots, reschedules, transactions, clock, events);
     }
 
     @Bean
     RescheduleUseCase rescheduleUseCase(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules,
                                         SlotRepositoryPort slots, ProfessionalRepositoryPort professionals,
-                                        SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock) {
-        return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock);
+                                        SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock,
+                                        com.fcv.citas.application.service.StatusEventRecorder events) {
+        return new RescheduleService(appointments, reschedules, slots, professionals, specialties, transactions, clock, events);
     }
 
     @Bean

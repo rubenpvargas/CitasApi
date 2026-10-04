@@ -26,8 +26,9 @@ class RescheduleDecisionServiceTest {
     final MovingAppointments appointments = new MovingAppointments();
     final CancelAppointmentServiceTest.RecordingSlots slots = new TransferRecordingSlots();
     final CancelAppointmentServiceTest.RecordingReschedules reschedules = new CancelAppointmentServiceTest.RecordingReschedules();
+    final List<com.fcv.citas.domain.model.NotificationType> events = new ArrayList<>();
     final RescheduleService service = new RescheduleService(appointments, reschedules, slots, null, null,
-            new DirectTransactions(), CLOCK);
+            new DirectTransactions(), CLOCK, (type, appointment, reason) -> events.add(type));
     static final LocalDateTime NEW_START = FUTURE.plusDays(1);
 
     @BeforeEach
@@ -48,6 +49,7 @@ class RescheduleDecisionServiceTest {
         assertThat(reschedules.statuses).containsExactly(RescheduleStatus.APPROVED);
         assertThat(reschedules.sources).containsExactly("ADMIN");
         assertThat(appointments.historySources).containsExactly("ADMIN");
+        assertThat(events).containsExactly(com.fcv.citas.domain.model.NotificationType.RESCHEDULE_APPROVED);
     }
 
     @Test
@@ -59,6 +61,7 @@ class RescheduleDecisionServiceTest {
         assertThat(((TransferRecordingSlots) slots).transfers).isEmpty();
         assertThat(appointments.moves).isEmpty();
         assertThat(reschedules.statuses).containsExactly(RescheduleStatus.REJECTED);
+        assertThat(events).containsExactly(com.fcv.citas.domain.model.NotificationType.RESCHEDULE_REJECTED);
     }
 
     @Test

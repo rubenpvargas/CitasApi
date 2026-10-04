@@ -36,10 +36,13 @@ public final class RescheduleService implements RescheduleUseCase {
     private final SpecialtyRepositoryPort specialties;
     private final TransactionPort transactions;
     private final Clock clock;
+    private final StatusEventRecorder events;
 
     public RescheduleService(AppointmentRepositoryPort appointments, RescheduleRepositoryPort reschedules,
                              SlotRepositoryPort slots, ProfessionalRepositoryPort professionals,
-                             SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock) {
+                             SpecialtyRepositoryPort specialties, TransactionPort transactions, Clock clock,
+                             StatusEventRecorder events) {
+        this.events = events;
         this.appointments = appointments;
         this.reschedules = reschedules;
         this.slots = slots;
@@ -111,7 +114,10 @@ public final class RescheduleService implements RescheduleUseCase {
             }
             reschedules.updateStatus(requestId, target, adminUserId, cleanReason, LocalDateTime.now(clock));
             reschedules.addHistory(requestId, target, adminUserId, "ADMIN", cleanReason, clock.instant());
-            return appointments.findById(appointment.id()).orElseThrow();
+            Appointment after = appointments.findById(appointment.id()).orElseThrow();
+            events.record(target == RescheduleStatus.APPROVED ? com.fcv.citas.domain.model.NotificationType.RESCHEDULE_APPROVED
+                    : com.fcv.citas.domain.model.NotificationType.RESCHEDULE_REJECTED, after, cleanReason);
+            return after;
         });
     }
 }

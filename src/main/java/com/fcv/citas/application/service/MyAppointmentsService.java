@@ -28,9 +28,12 @@ public final class MyAppointmentsService implements MyAppointmentsUseCase {
     private final RescheduleRepositoryPort reschedules;
     private final TransactionPort transactions;
     private final Clock clock;
+    private final StatusEventRecorder events;
 
     public MyAppointmentsService(AppointmentRepositoryPort appointments, SlotRepositoryPort slots,
-                                 RescheduleRepositoryPort reschedules, TransactionPort transactions, Clock clock) {
+                                 RescheduleRepositoryPort reschedules, TransactionPort transactions, Clock clock,
+                                 StatusEventRecorder events) {
+        this.events = events;
         this.appointments = appointments;
         this.slots = slots;
         this.reschedules = reschedules;
@@ -71,7 +74,9 @@ public final class MyAppointmentsService implements MyAppointmentsUseCase {
                 reschedules.addHistory(pending.id(), RescheduleStatus.CANCELLED, null, "SYSTEM", reason, clock.instant());
                 slots.releaseHold(pending.id());
             });
-            return appointments.findById(appointmentId).orElseThrow();
+            Appointment after = appointments.findById(appointmentId).orElseThrow();
+            events.record(com.fcv.citas.domain.model.NotificationType.APPOINTMENT_CANCELLED, after, null);
+            return after;
         });
     }
 
